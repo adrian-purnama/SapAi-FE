@@ -18,7 +18,7 @@ export type RagInsightsExportSummary = {
 export type RagInsightsExportMeta = {
   projectLabel: string;
   apiKeyId: string;
-  plan: "pro" | "scale";
+  plan: string;
   filterFrom: string;
   filterTo: string;
   filterAnswerable: string;
