@@ -700,11 +700,6 @@ export function FaqRagEmbedSettingsCard({ apiKeyId, disabled = false, faqLoad }:
                   Generate a token under <strong className="text-zinc-800">Setup</strong> to unlock preview, copy
                   blocks, and links.
                 </p>
-              ) : !embedToken ? (
-                <p className="rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-xs leading-relaxed text-amber-950">
-                  This project used an older embed format. Open <strong>Setup</strong> and click{" "}
-                  <strong>Rotate token</strong> once to get a copyable token.
-                </p>
               ) : !embed.enabled ? (
                 <p className="text-xs leading-relaxed text-zinc-600">
                   Turn on <strong>Embed active</strong> under <strong>Setup</strong> for live answers and the preview
@@ -909,8 +904,6 @@ export function FaqRagEmbedSettingsCard({ apiKeyId, disabled = false, faqLoad }:
                   >
                     Open embed page (new tab)
                   </Link>
-                ) : embed.hasToken && !embedToken ? (
-                  <span className="text-xs text-zinc-500">Open link: rotate the token on the Setup tab once.</span>
                 ) : null}
               </div>
             </div>
