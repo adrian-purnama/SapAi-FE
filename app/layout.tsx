@@ -3,8 +3,13 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { buildRootSiteMetadata } from "@/lib/site-metadata";
 import { AppChrome } from "@/app/components/AppChrome";
 import { AppToaster } from "@/app/components/AppToaster";
+import { SapAiSiteEmbed } from "@/app/components/SapAiSiteEmbed";
 import { SapAiProvider } from "@/app/providers/sapai-provider";
 import "./globals.css";
+
+const SITE_EMBED_IFRAME_SRC =
+  process.env.NEXT_PUBLIC_SITE_EMBED_IFRAME_SRC?.trim() ||
+  "https://sapai.amfphub.com/embed/t/et_5e346abade01d337943922a66b672c68609490536d7cabc9";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +41,7 @@ export default function RootLayout({
           <AppToaster />
           {children}
         </SapAiProvider>
+        <SapAiSiteEmbed src={SITE_EMBED_IFRAME_SRC} />
       </body>
     </html>
   );

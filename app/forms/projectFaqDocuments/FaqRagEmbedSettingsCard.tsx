@@ -9,6 +9,7 @@ import type { FaqProjectCategoriesLoadState } from "@/app/forms/faqProjectCatego
 import { DEFAULT_APP_BADGE_LABEL } from "@/lib/embed-badge";
 import { DEFAULT_EMBED_AI_DISCLAIMER } from "@/lib/embed-disclaimer";
 import { EMBED_IFRAME_H, EMBED_IFRAME_W } from "@/lib/embed-iframe";
+import { buildEmbedHostListenerScript } from "@/lib/embed-post-message";
 import { getSiteOrigin } from "@/lib/site-metadata";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +35,8 @@ function buildIframeSnippet(pageUrl: string): string {
   height="${EMBED_IFRAME_H}"
   style="position:fixed;bottom:20px;right:20px;border:0;border-radius:16px;background:transparent;z-index:2147483000;box-shadow:0 8px 32px rgba(0,0,0,0.2)"
   allow="clipboard-write"
-></iframe>`;
+></iframe>
+${buildEmbedHostListenerScript()}`;
 }
 
 const MAX_EMBED_ALLOWED_ORIGINS = 20;

@@ -4,9 +4,10 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
-import { Bot, ExternalLink, Loader2, Send } from "lucide-react";
+import { AlertCircle, Bot, ExternalLink, Loader2, MessageCircle, Send, Sparkles, X } from "lucide-react";
 
 import { DEFAULT_EMBED_AI_DISCLAIMER } from "@/lib/embed-disclaimer";
+import { postSapAiEmbedMessage } from "@/lib/embed-post-message";
 
 import { useEmbedRagChat } from "@/app/forms/projectFaqDocuments/useEmbedRagChat";
 import { cn } from "@/lib/utils";
@@ -152,6 +153,7 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [showProfileInfo, setShowProfileInfo] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(true);
   const endRef = useRef<HTMLDivElement>(null);
   const greetingInjectedRef = useRef(false);
 
@@ -205,24 +207,69 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
     }
   }, [draft, rag, embedActive]);
 
+  const openPanel = useCallback(() => {
+    setPanelOpen(true);
+    postSapAiEmbedMessage("open");
+  }, []);
+
+  const closePanel = useCallback(() => {
+    setPanelOpen(false);
+    postSapAiEmbedMessage("close");
+  }, []);
+
+  if (!panelOpen) {
+    return (
+      <div
+        className={cn("flex h-full min-h-0 w-full items-end justify-end", compact ? "p-2" : "p-4")}
+        style={{ ["--embed-accent" as string]: accent }}
+      >
+        <button
+          type="button"
+          onClick={openPanel}
+          className={cn(
+            styles.fabReopen,
+            "inline-flex items-center justify-center rounded-full text-white transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400",
+            compact ? "h-12 w-12" : "h-14 w-14",
+          )}
+          style={{ backgroundColor: accent }}
+          aria-label={`Open ${displayName}`}
+        >
+          <MessageCircle className={cn(compact ? "h-5 w-5" : "h-6 w-6")} aria-hidden />
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-full min-h-0 w-full flex-col">
+    <div
+      className={cn("flex h-full min-h-0 w-full flex-col", !compact && "p-3 sm:p-4")}
+      style={{ ["--embed-accent" as string]: accent }}
+    >
       <div
         className={cn(
-          "flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-zinc-200/90 bg-zinc-100 shadow-[0_12px_40px_-10px_rgba(0,0,0,0.24)]",
-          compact ? "h-full" : "h-full",
+          styles.shell,
+          "flex min-h-0 flex-1 flex-col overflow-hidden border border-zinc-200/80 bg-white",
+          compact ? cn("h-full", styles.shellCompact) : styles.shellStandalone,
         )}
-        style={{ ["--embed-accent" as string]: accent }}
         role="region"
         aria-label={`${displayName} chat`}
       >
+        <div className={styles.accentBar} aria-hidden />
         <header
           className={cn(
-            "relative flex shrink-0 items-start justify-between gap-3 border-b border-zinc-200/90 bg-white shadow-sm",
-            compact ? "px-2 py-1.5" : "px-3 py-2.5",
+            "relative flex shrink-0 items-center gap-2.5 border-b border-zinc-200/80 bg-white/95 backdrop-blur-sm",
+            compact ? "px-2.5 py-2 pr-9" : "px-3.5 py-2.5 pr-11",
           )}
         >
-          <div className="flex min-w-0 flex-1 items-start gap-2">
+          <button
+            type="button"
+            onClick={closePanel}
+            className="absolute right-1.5 top-1/2 z-10 -translate-y-1/2 rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-sky-400"
+            aria-label="Close chat"
+          >
+            <X className={cn(compact ? "h-3.5 w-3.5" : "h-4 w-4")} aria-hidden />
+          </button>
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
             {profileUrl ? (
               <button
                 type="button"
@@ -232,9 +279,9 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
                   setShowProfileInfo((v) => !v);
                 }}
                 className={cn(
-                  "flex shrink-0 overflow-hidden rounded-lg ring-1 ring-zinc-200/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400",
+                  "flex shrink-0 overflow-hidden rounded-full ring-2 ring-white shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400",
                   profileDescription ? "cursor-pointer hover:opacity-90" : "cursor-default opacity-90",
-                  compact ? "h-7 w-7" : "h-8 w-8",
+                  compact ? "h-8 w-8" : "h-9 w-9",
                 )}
                 aria-label={profileDescription ? "About the assistant" : "Assistant"}
                 aria-expanded={showProfileInfo}
@@ -244,8 +291,8 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
             ) : (
               <span
                 className={cn(
-                  "flex shrink-0 items-center justify-center rounded-lg text-white",
-                  compact ? "h-7 w-7" : "h-8 w-8",
+                  "flex shrink-0 items-center justify-center rounded-full text-white shadow-sm ring-2 ring-white",
+                  compact ? "h-8 w-8" : "h-9 w-9",
                 )}
                 style={{ backgroundColor: accent }}
               >
@@ -268,32 +315,9 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
               ) : null}
             </div>
           </div>
-          <div
-            className={cn(
-              "max-w-[48%] shrink-0 space-y-0.5 text-right text-zinc-500",
-              compact ? "text-[9px] leading-tight" : "text-[10px] leading-snug",
-            )}
-          >
-            <p className={cn("text-zinc-500", compact ? "line-clamp-2" : "line-clamp-3")} role="note">
-              {disclaimerText}
-            </p>
-            {furtherInfoLink ? (
-              <p>
-                <a
-                  href={furtherInfoLink.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex max-w-full items-center justify-end gap-0.5 font-medium text-sky-700 underline underline-offset-2 hover:text-sky-800"
-                >
-                  <span className="truncate">{furtherInfoLink.label}</span>
-                  <ExternalLink className="h-2 w-2 shrink-0 opacity-80" aria-hidden />
-                </a>
-              </p>
-            ) : null}
-          </div>
           {showProfileInfo && profileDescription ? (
             <div
-              className="absolute right-3 top-full z-20 mt-1 max-h-48 min-w-[200px] max-w-[min(280px,calc(100%-1rem))] overflow-y-auto rounded-lg border border-zinc-200 bg-white p-3 text-left text-xs leading-relaxed text-zinc-800 shadow-lg"
+              className="absolute left-3 top-full z-20 mt-1 max-h-48 min-w-[200px] max-w-[min(280px,calc(100%-1rem))] overflow-y-auto rounded-xl border border-zinc-200/90 bg-white/95 p-3 text-left text-xs leading-relaxed text-zinc-800 shadow-xl backdrop-blur-sm"
               role="region"
               aria-label="Assistant description"
             >
@@ -312,20 +336,24 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
         {!embedActive ? (
           <div
             className={cn(
-              "shrink-0 border-b border-amber-200 bg-amber-50 text-amber-950",
-              compact ? "px-2 py-2 text-xs" : "px-3 py-2.5 text-sm",
+              "mx-3 mt-3 flex shrink-0 items-start gap-2 rounded-xl border border-amber-200/90 bg-amber-50/95 px-3 py-2.5 text-amber-950 shadow-sm",
+              compact ? "text-xs" : "text-sm",
             )}
             role="alert"
           >
-            This embed is not available (disabled, invalid token, or the account plan does not include the public
-            embed).
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" aria-hidden />
+            <p className="leading-relaxed">
+              This assistant is unavailable — the embed may be off, the link invalid, or the plan may not include
+              public embed.
+            </p>
           </div>
         ) : null}
 
         <div
           className={cn(
-            "min-h-0 flex-1 space-y-3 overflow-y-auto bg-zinc-50/90",
-            compact ? "space-y-2 px-2 py-2" : "space-y-3 px-3 py-3",
+            styles.messagesArea,
+            "min-h-0 flex-1 space-y-3 overflow-y-auto",
+            compact ? "space-y-2 px-2.5 py-2.5" : "space-y-3 px-3.5 py-3.5",
             styles.scrollSleek,
           )}
         >
@@ -338,13 +366,17 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
             >
               <span
                 className={cn(
-                  "flex items-center justify-center rounded-2xl bg-zinc-200/90 text-zinc-500",
-                  compact ? "h-10 w-10" : "h-12 w-12",
+                  styles.emptyIconRing,
+                  "flex items-center justify-center rounded-2xl text-zinc-700",
+                  compact ? "h-11 w-11" : "h-14 w-14",
                 )}
               >
-                <Bot className={cn(compact ? "h-5 w-5" : "h-6 w-6")} aria-hidden />
+                <Sparkles className={cn(compact ? "h-5 w-5" : "h-6 w-6")} style={{ color: accent }} aria-hidden />
               </span>
-              <p className={cn("font-medium text-zinc-800", compact ? "text-xs" : "text-sm")}>
+              <p className={cn("font-semibold text-zinc-900", compact ? "text-xs" : "text-sm")}>
+                {displayName}
+              </p>
+              <p className={cn("font-medium text-zinc-700", compact ? "text-xs" : "text-sm")}>
                 Ask your knowledge base
               </p>
               <p
@@ -359,7 +391,14 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
           ) : null}
 
           {messages.map((m) => (
-            <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div
+              key={m.id}
+              className={cn(
+                styles.messageIn,
+                "flex",
+                m.role === "user" ? "justify-end" : "justify-start",
+              )}
+            >
               <div
                 className={
                   m.role === "user"
@@ -373,7 +412,7 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
                           compact ? "px-2.5 py-2 text-xs" : "px-3.5 py-2.5 text-sm",
                         )
                       : cn(
-                          "max-w-[92%] rounded-2xl rounded-bl-md border border-zinc-200/90 bg-white shadow-sm",
+                          "max-w-[92%] rounded-2xl rounded-bl-md border border-zinc-200/80 bg-white/95 shadow-sm ring-1 ring-zinc-100/80",
                           compact ? "px-2.5 py-2" : "px-3.5 py-2.5",
                         )
                 }
@@ -409,7 +448,34 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
           <div ref={endRef} />
         </div>
 
-        <div className={cn("shrink-0 border-t border-zinc-200/90 bg-white", compact ? "px-2 py-2" : "px-3 py-2.5")}>
+        <div
+          className={cn(
+            "shrink-0 border-t border-zinc-200/80 bg-white/95 backdrop-blur-sm",
+            compact ? "px-2.5 pt-2 pb-2" : "px-3.5 pt-2.5 pb-3",
+          )}
+        >
+          <p
+            className={cn(
+              "mb-2 text-center leading-snug text-zinc-400",
+              compact ? "text-[9px]" : "text-[10px]",
+            )}
+            role="note"
+          >
+            {disclaimerText}
+            {furtherInfoLink ? (
+              <>
+                {" "}
+                <a
+                  href={furtherInfoLink.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-sky-700 underline underline-offset-2 hover:text-sky-800"
+                >
+                  {furtherInfoLink.label}
+                </a>
+              </>
+            ) : null}
+          </p>
           <form
             id={formId}
             className="flex items-end gap-2"
@@ -435,7 +501,7 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
               placeholder="Message…"
               disabled={rag.running || !embedActive}
               className={cn(
-                "max-h-24 flex-1 resize-none rounded-xl border border-zinc-200 bg-zinc-50 shadow-inner outline-none transition placeholder:text-zinc-400 focus:border-zinc-300 focus:ring-2 focus:ring-zinc-200/80 disabled:opacity-50",
+                "max-h-24 flex-1 resize-none rounded-xl border border-zinc-200/90 bg-zinc-50/90 shadow-inner outline-none transition placeholder:text-zinc-400 focus:border-zinc-300 focus:ring-2 focus:ring-[color-mix(in_srgb,var(--embed-accent)_28%,transparent)] disabled:opacity-50",
                 compact
                   ? "min-h-[38px] px-2.5 py-2 text-xs"
                   : "min-h-[44px] max-h-28 px-3 py-2.5 text-sm",

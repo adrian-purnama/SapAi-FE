@@ -35,7 +35,7 @@
   width: 6px;
   height: 6px;
   border-radius: 9999px;
-  background: color-mix(in srgb, #71717a 85%, transparent);
+  background: color-mix(in srgb, var(--embed-accent, #71717a) 70%, #a1a1aa);
   animation: embedTypingPulse 1.15s ease-in-out infinite;
 }
 
@@ -58,4 +58,85 @@
     opacity: 1;
     transform: translateY(-3px);
   }
+}
+
+.shell {
+  --embed-accent: #18181b;
+}
+
+.shellCompact {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.shellStandalone {
+  border-radius: 1rem;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #e4e4e7 80%, transparent),
+    0 20px 50px -12px color-mix(in srgb, #09090b 18%, transparent);
+}
+
+.accentBar {
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--embed-accent),
+    color-mix(in srgb, var(--embed-accent) 55%, #ffffff)
+  );
+}
+
+.messagesArea {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fafafa 92%, transparent) 0%, #f4f4f5 100%),
+    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--embed-accent) 6%, transparent) 0%, transparent 55%);
+}
+
+.messageIn {
+  animation: embedMessageIn 0.28s ease-out both;
+}
+
+@keyframes embedMessageIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fabReopen {
+  animation: embedFabIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  box-shadow:
+    0 4px 14px color-mix(in srgb, var(--embed-accent) 35%, transparent),
+    0 0 0 1px color-mix(in srgb, #ffffff 25%, transparent) inset;
+}
+
+.fabReopen:hover {
+  transform: scale(1.04);
+}
+
+.fabReopen:active {
+  transform: scale(0.98);
+}
+
+@keyframes embedFabIn {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.emptyIconRing {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--embed-accent) 18%, #ffffff),
+    color-mix(in srgb, var(--embed-accent) 8%, #f4f4f5)
+  );
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--embed-accent) 12%, transparent);
 }

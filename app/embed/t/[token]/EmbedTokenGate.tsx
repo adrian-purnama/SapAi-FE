@@ -2,12 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { cn } from "@/lib/utils";
+
 import {
   EmbedRagChat,
   type EmbedFurtherInfoLink,
   type EmbedPublicAppBadge,
   type EmbedPublicBranding,
 } from "./EmbedRagChat";
+
+import styles from "./EmbedRagChat.module.css";
 
 function readStandaloneBaseUrl(): string {
   const raw = process.env.NEXT_PUBLIC_STANDALONE_API_URL?.trim() || "http://localhost:8000";
@@ -37,6 +41,30 @@ function parseAppBadge(raw: unknown): EmbedPublicAppBadge | null {
 type Props = {
   token: string;
 };
+
+function EmbedLoadingShell() {
+  return (
+    <div className="flex h-full min-h-0 w-full flex-col p-2 sm:p-3">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-lg">
+        <div className="h-[3px] animate-pulse bg-zinc-200" />
+        <div className="flex items-center gap-3 border-b border-zinc-100 px-3 py-3">
+          <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-zinc-200" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-3.5 w-28 animate-pulse rounded-md bg-zinc-200" />
+            <div className="h-2.5 w-20 animate-pulse rounded-md bg-zinc-100" />
+          </div>
+        </div>
+        <div className={cn("flex flex-1 flex-col justify-end gap-3 p-3", styles.scrollSleek)}>
+          <div className="h-14 w-[78%] animate-pulse rounded-2xl rounded-bl-md bg-white shadow-sm ring-1 ring-zinc-100" />
+          <div className="ml-auto h-10 w-[52%] animate-pulse rounded-2xl rounded-br-md bg-zinc-300/70" />
+        </div>
+        <div className="border-t border-zinc-100 p-3">
+          <div className="h-11 animate-pulse rounded-xl bg-zinc-100" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function EmbedTokenGate({ token }: Props) {
   const baseUrl = useMemo(() => readStandaloneBaseUrl(), []);
@@ -85,11 +113,7 @@ export function EmbedTokenGate({ token }: Props) {
   }, [baseUrl, token]);
 
   if (status === "loading") {
-    return (
-      <div className="flex h-full min-h-0 items-center justify-center bg-zinc-100 p-6 text-sm text-zinc-600">
-        Checking embed…
-      </div>
-    );
+    return <EmbedLoadingShell />;
   }
 
   return <EmbedRagChat token={token} embedActive={status === "active"} branding={branding} />;
