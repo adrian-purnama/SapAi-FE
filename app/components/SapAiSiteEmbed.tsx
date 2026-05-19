@@ -2,27 +2,80 @@
 
 import { MessageCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { EMBED_IFRAME_H, EMBED_IFRAME_INLINE_STYLE, EMBED_IFRAME_W } from "@/lib/embed-iframe";
-import { isSapAiEmbedMessage } from "@/lib/embed-post-message";
+import { isSapAiEmbedMessage, withEmbedWidgetParam } from "@/lib/embed-post-message";
+
+const SITE_EMBED_OPEN_KEY = "sapai-site-embed-open";
 
 type Props = {
   src: string;
 };
 
+function readDefaultSiteEmbedOpen(): boolean {
+  const raw = process.env.NEXT_PUBLIC_SITE_EMBED_DEFAULT_OPEN?.trim().toLowerCase();
+  if (raw === "true" || raw === "1") return true;
+  if (raw === "false" || raw === "0") return false;
+  return false;
+}
+
+function readStoredSiteEmbedOpen(): boolean {
+  if (typeof window === "undefined") return readDefaultSiteEmbedOpen();
+  try {
+    const v = sessionStorage.getItem(SITE_EMBED_OPEN_KEY);
+    if (v === "1") return true;
+    if (v === "0") return false;
+  } catch {
+    /* private mode */
+  }
+  return readDefaultSiteEmbedOpen();
+}
+
+function storeSiteEmbedOpen(open: boolean): void {
+  try {
+    sessionStorage.setItem(SITE_EMBED_OPEN_KEY, open ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+}
+
 /**
- * Site-wide SapAi iframe widget (e.g. root layout). Hidden on `/embed/*` and when the user closes the panel.
+ * Site-wide SapAi iframe widget (e.g. root layout). Hidden on `/embed/*`.
+ * Iframe stays mounted when closed so in-iframe chat state is preserved.
  */
+const SITE_EMBED_FAB_STYLE = {
+  bottom: EMBED_IFRAME_INLINE_STYLE.bottom ?? 20,
+  right: EMBED_IFRAME_INLINE_STYLE.right ?? 20,
+} as const;
+
 export function SapAiSiteEmbed({ src }: Props) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(true);
+  const widgetSrc = withEmbedWidgetParam(src);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [open, setOpen] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
-  const onMessage = useCallback((event: MessageEvent) => {
-    if (!isSapAiEmbedMessage(event.data)) return;
-    if (event.data.action === "close") setOpen(false);
-    if (event.data.action === "open") setOpen(true);
+  useEffect(() => {
+    setOpen(readStoredSiteEmbedOpen());
+    setHydrated(true);
   }, []);
+
+  const setOpenPersisted = useCallback((next: boolean) => {
+    setOpen(next);
+    storeSiteEmbedOpen(next);
+  }, []);
+
+  const onMessage = useCallback(
+    (event: MessageEvent) => {
+      if (!isSapAiEmbedMessage(event.data)) return;
+      const frameWindow = iframeRef.current?.contentWindow;
+      if (frameWindow && event.source !== frameWindow) return;
+      if (event.data.action === "close") setOpenPersisted(false);
+      if (event.data.action === "open") setOpenPersisted(true);
+    },
+    [setOpenPersisted],
+  );
 
   useEffect(() => {
     window.addEventListener("message", onMessage);
@@ -33,28 +86,36 @@ export function SapAiSiteEmbed({ src }: Props) {
     return null;
   }
 
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-[2147483000] inline-flex h-14 w-14 items-center justify-center rounded-full border border-zinc-200/90 bg-zinc-900 text-white shadow-lg transition hover:bg-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
-        aria-label="Open assistant chat"
-      >
-        <MessageCircle className="h-6 w-6" aria-hidden />
-      </button>
-    );
+  if (!hydrated) {
+    return null;
   }
 
   return (
-    <iframe
-      id="sapai-embed-widget"
-      src={src}
-      title="SapAi assistant"
-      width={EMBED_IFRAME_W}
-      height={EMBED_IFRAME_H}
-      style={EMBED_IFRAME_INLINE_STYLE}
-      allow="clipboard-write"
-    />
+    <>
+      {!open ? (
+        <button
+          type="button"
+          onClick={() => setOpenPersisted(true)}
+          className="fixed z-[2147483000] inline-flex h-14 w-14 items-center justify-center rounded-full border border-zinc-200/90 bg-zinc-900 text-white shadow-lg transition hover:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+          style={SITE_EMBED_FAB_STYLE}
+          aria-label="Open assistant chat"
+        >
+          <MessageCircle className="h-6 w-6" aria-hidden />
+        </button>
+      ) : null}
+      <iframe
+        ref={iframeRef}
+        id="sapai-embed-widget"
+        src={widgetSrc}
+        title="SapAi assistant"
+        width={EMBED_IFRAME_W}
+        height={EMBED_IFRAME_H}
+        style={{
+          ...EMBED_IFRAME_INLINE_STYLE,
+          display: open ? "block" : "none",
+        }}
+        allow="clipboard-write"
+      />
+    </>
   );
 }

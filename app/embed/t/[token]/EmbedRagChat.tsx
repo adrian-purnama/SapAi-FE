@@ -1,15 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
 import { AlertCircle, Bot, ExternalLink, Loader2, MessageCircle, Send, Sparkles, X } from "lucide-react";
 
+import { loadEmbedChatMessages, saveEmbedChatMessages } from "@/lib/embed-chat-storage";
 import { DEFAULT_EMBED_AI_DISCLAIMER } from "@/lib/embed-disclaimer";
-import { postSapAiEmbedMessage } from "@/lib/embed-post-message";
+import {
+  isEmbedLivePreview,
+  isInEmbedIframe,
+  isParentControlledEmbedClose,
+  postSapAiEmbedMessage,
+} from "@/lib/embed-post-message";
 
 import { useEmbedRagChat } from "@/app/forms/projectFaqDocuments/useEmbedRagChat";
+import { isRecaptchaEnabledOnClient } from "@/lib/recaptcha-client";
 import { cn } from "@/lib/utils";
 
 import styles from "./EmbedRagChat.module.css";
@@ -152,10 +159,15 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
   const rag = useEmbedRagChat(token);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
+  const [chatHydrated, setChatHydrated] = useState(false);
   const [showProfileInfo, setShowProfileInfo] = useState(false);
   const [panelOpen, setPanelOpen] = useState(true);
+  const [isEmbedded, setIsEmbedded] = useState(false);
+  const [parentControlledClose, setParentControlledClose] = useState(false);
+  const [livePreviewEmbed, setLivePreviewEmbed] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const greetingInjectedRef = useRef(false);
+  const storageTokenRef = useRef(token);
 
   const accent = resolveAccent(branding?.embedColor ?? null);
   const displayName = branding?.assistantName?.trim() ? branding.assistantName.trim() : "Assistant";
@@ -165,20 +177,42 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
   const furtherInfoLink = branding?.furtherInfoLink ?? null;
   const appBadge = branding?.appBadge ?? null;
 
-  const isEmbedded = typeof window !== "undefined" && window.parent !== window;
   const compact = isEmbedded;
+  const recaptchaNotice = isRecaptchaEnabledOnClient();
+  const showDisclaimerText = Boolean(disclaimerText || furtherInfoLink);
 
   useEffect(() => {
+    setIsEmbedded(isInEmbedIframe());
+    setParentControlledClose(isParentControlledEmbedClose());
+    setLivePreviewEmbed(isEmbedLivePreview());
+  }, []);
+
+  useEffect(() => {
+    if (parentControlledClose) setPanelOpen(true);
+  }, [parentControlledClose]);
+
+  useLayoutEffect(() => {
+    storageTokenRef.current = token;
+    setChatHydrated(false);
     greetingInjectedRef.current = false;
+    const stored = loadEmbedChatMessages(token);
+    setMessages(stored);
+    if (stored.length > 0) greetingInjectedRef.current = true;
+    setChatHydrated(true);
   }, [token]);
 
   useEffect(() => {
-    if (!embedActive) return;
+    if (!chatHydrated || storageTokenRef.current !== token) return;
+    saveEmbedChatMessages(token, messages);
+  }, [token, messages, chatHydrated]);
+
+  useEffect(() => {
+    if (!embedActive || !chatHydrated) return;
     const g = branding?.assistantGreeting?.trim();
     if (!g || greetingInjectedRef.current) return;
     greetingInjectedRef.current = true;
     setMessages((m) => [...m, { id: crypto.randomUUID(), role: "assistant", content: g }]);
-  }, [embedActive, branding?.assistantGreeting]);
+  }, [embedActive, branding?.assistantGreeting, chatHydrated]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -213,11 +247,15 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
   }, []);
 
   const closePanel = useCallback(() => {
+    if (parentControlledClose) {
+      postSapAiEmbedMessage("close");
+      return;
+    }
     setPanelOpen(false);
-    postSapAiEmbedMessage("close");
-  }, []);
+    if (!livePreviewEmbed) postSapAiEmbedMessage("close");
+  }, [parentControlledClose, livePreviewEmbed]);
 
-  if (!panelOpen) {
+  if (!panelOpen && !parentControlledClose) {
     return (
       <div
         className={cn("flex h-full min-h-0 w-full items-end justify-end", compact ? "p-2" : "p-4")}
@@ -454,28 +492,59 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
             compact ? "px-2.5 pt-2 pb-2" : "px-3.5 pt-2.5 pb-3",
           )}
         >
-          <p
-            className={cn(
-              "mb-2 text-center leading-snug text-zinc-400",
-              compact ? "text-[9px]" : "text-[10px]",
-            )}
-            role="note"
-          >
-            {disclaimerText}
-            {furtherInfoLink ? (
-              <>
-                {" "}
-                <a
-                  href={furtherInfoLink.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-sky-700 underline underline-offset-2 hover:text-sky-800"
-                >
-                  {furtherInfoLink.label}
-                </a>
-              </>
-            ) : null}
-          </p>
+          {showDisclaimerText ? (
+            <p
+              className={cn(
+                "text-center leading-snug text-zinc-400",
+                recaptchaNotice ? "mb-1" : "mb-2",
+                compact ? "text-[9px]" : "text-[10px]",
+              )}
+              role="note"
+            >
+              {disclaimerText}
+              {furtherInfoLink ? (
+                <>
+                  {" "}
+                  <a
+                    href={furtherInfoLink.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-sky-700 underline underline-offset-2 hover:text-sky-800"
+                  >
+                    {furtherInfoLink.label}
+                  </a>
+                </>
+              ) : null}
+            </p>
+          ) : null}
+          {recaptchaNotice ? (
+            <p
+              className={cn(
+                "mb-2 text-center leading-snug text-zinc-400",
+                compact ? "text-[7.5px]" : "text-[8.5px]",
+              )}
+            >
+              Protected by reCAPTCHA. Google{" "}
+              <a
+                href="https://policies.google.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-zinc-600"
+              >
+                Privacy
+              </a>{" "}
+              and{" "}
+              <a
+                href="https://policies.google.com/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-zinc-600"
+              >
+                Terms
+              </a>{" "}
+              apply.
+            </p>
+          ) : null}
           <form
             id={formId}
             className="flex items-end gap-2"

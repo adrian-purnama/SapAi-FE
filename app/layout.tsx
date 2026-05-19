@@ -7,6 +7,7 @@ import { SapAiSiteEmbed } from "@/app/components/SapAiSiteEmbed";
 import { SapAiProvider } from "@/app/providers/sapai-provider";
 import "./globals.css";
 
+// NEXT_PUBLIC_SITE_EMBED_DEFAULT_OPEN=false — widget starts closed (FAB only); iframe stays mounted when hidden.
 const SITE_EMBED_IFRAME_SRC =
   process.env.NEXT_PUBLIC_SITE_EMBED_IFRAME_SRC?.trim() ||
   "https://sapai.amfphub.com/embed/t/et_5e346abade01d337943922a66b672c68609490536d7cabc9";

@@ -1,3 +1,5 @@
+import "./embed-recaptcha.css";
+
 /**
  * Embed routes fill the viewport so iframes get a single chat surface with no extra page chrome.
  */

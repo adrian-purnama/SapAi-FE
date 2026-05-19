@@ -9,7 +9,7 @@ import type { FaqProjectCategoriesLoadState } from "@/app/forms/faqProjectCatego
 import { DEFAULT_APP_BADGE_LABEL } from "@/lib/embed-badge";
 import { DEFAULT_EMBED_AI_DISCLAIMER } from "@/lib/embed-disclaimer";
 import { EMBED_IFRAME_H, EMBED_IFRAME_W } from "@/lib/embed-iframe";
-import { buildEmbedHostListenerScript } from "@/lib/embed-post-message";
+import { buildEmbedHostListenerScript, withEmbedWidgetParam } from "@/lib/embed-post-message";
 import { getSiteOrigin } from "@/lib/site-metadata";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +25,7 @@ function escapeAttr(s: string): string {
 
 /** Fixed-size bottom-right iframe widget (no FAB / resize script). */
 function buildIframeSnippet(pageUrl: string): string {
-  const safeSrc = escapeAttr(pageUrl);
+  const safeSrc = escapeAttr(withEmbedWidgetParam(pageUrl));
   return `<!-- SapAi embed widget -->
 <iframe
   id="sapai-embed-widget"

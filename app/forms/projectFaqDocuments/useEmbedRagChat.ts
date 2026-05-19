@@ -3,6 +3,11 @@
 import { useCallback, useMemo, useState } from "react";
 
 import { toastError } from "@/lib/app-toast";
+import {
+  getRecaptchaToken,
+  isRecaptchaEnabledOnClient,
+  RECAPTCHA_EMBED_CHAT_ACTION,
+} from "@/lib/recaptcha-client";
 
 /** Max time to wait for job completion (Ollama/model cold start + inference can exceed 1–2 min). */
 const RAG_JOB_WAIT_TIMEOUT_MS = 10 * 60 * 1000;
@@ -209,6 +214,15 @@ export function useEmbedRagChat(embedToken: string) {
       setError("");
 
       try {
+        let recaptchaToken: string | undefined;
+        if (isRecaptchaEnabledOnClient()) {
+          const tokenFromRecaptcha = await getRecaptchaToken(RECAPTCHA_EMBED_CHAT_ACTION);
+          if (!tokenFromRecaptcha) {
+            throw new Error("reCAPTCHA verification is required but not configured.");
+          }
+          recaptchaToken = tokenFromRecaptcha;
+        }
+
         const res = await fetch(`${baseUrl}/api/v1/embed/chat`, {
           method: "POST",
           headers: {
@@ -218,6 +232,7 @@ export function useEmbedRagChat(embedToken: string) {
           body: JSON.stringify({
             message: q,
             model: RAG_TEST_MODEL_LABEL,
+            ...(recaptchaToken ? { recaptchaToken } : {}),
           }),
         });
 
