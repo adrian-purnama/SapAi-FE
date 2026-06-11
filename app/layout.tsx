@@ -10,7 +10,7 @@ import "./globals.css";
 // NEXT_PUBLIC_SITE_EMBED_DEFAULT_OPEN=false — widget starts closed (FAB only); iframe stays mounted when hidden.
 const SITE_EMBED_IFRAME_SRC =
   process.env.NEXT_PUBLIC_SITE_EMBED_IFRAME_SRC?.trim() ||
-  "https://sapai.amfphub.com/embed/t/et_5e346abade01d337943922a66b672c68609490536d7cabc9";
+  "http://localhost:3000/embed/t/et_64546b4a0e4a03918a354a72b90076bf21d5bcf0b7dc7122";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

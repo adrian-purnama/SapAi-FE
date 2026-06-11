@@ -19,9 +19,11 @@ export default function ServerChatDocsPage() {
         Send a message with <strong className="font-medium text-zinc-800">POST /api/v1/chat</strong> and you receive a{" "}
         <code className="rounded bg-zinc-100 px-1 font-mono text-xs">job.id</code>. Poll{" "}
         <strong className="font-medium text-zinc-800">GET /api/v1/chat/jobs/:id</strong> (or use the WebSocket below) until
-        the answer is ready. Use <code className="font-mono text-xs">taskType: chat</code> for a normal assistant reply, or{" "}
-        <code className="font-mono text-xs">taskType: rag</code> to answer from the FAQ documents you uploaded in the SapAi
-        dashboard. Set your API key in the settings bar above before you run the examples.
+        the answer is ready. Use <code className="font-mono text-xs">taskType: chat</code> for a normal assistant reply,{" "}
+        <code className="font-mono text-xs">taskType: rag</code> to answer from FAQ documents you uploaded in the dashboard, or{" "}
+        <code className="font-mono text-xs">taskType: translate</code> for language translation (no <code className="font-mono text-xs">model</code>{" "}
+        field — the server uses <code className="font-mono text-xs">OLLAMA_TRANSLATE_MODEL</code>). Set your API key in the
+        settings bar above before you run the examples.
       </p>
 
       <section className="mt-8 rounded-xl border border-zinc-200 bg-zinc-50/80 p-4">
@@ -64,7 +66,10 @@ export default function ServerChatDocsPage() {
               <code className="font-mono text-xs">outputJsonTemplate</code> asks for structured JSON.{" "}
               <code className="font-mono text-xs">taskType</code>{" "}
               <code className="font-mono text-xs">chat</code> = completion;{" "}
-              <code className="font-mono text-xs">rag</code> = FAQ vector search then answer.
+              <code className="font-mono text-xs">rag</code> = FAQ vector search then answer;{" "}
+              <code className="font-mono text-xs">translate</code> = structured language fields +{" "}
+              <code className="font-mono text-xs">text</code> (Ollama translate model, no client{" "}
+              <code className="font-mono text-xs">model</code>).
             </>
           }
           tryIt={<ApiHttpExamplesPanel variant="chatJob" />}
@@ -85,6 +90,17 @@ export default function ServerChatDocsPage() {
   "input": [{ "role": "user", "content": "What is the refund policy?" }]
 }`,
             },
+            {
+              title: "Translate",
+              body: `{
+  "taskType": "translate",
+  "sourceLang": "English",
+  "sourceCode": "en",
+  "targetLang": "Indonesian",
+  "targetCode": "id",
+  "text": "Hello, how are you?"
+}`,
+            },
           ]}
           exampleResponses={[
             {
@@ -96,6 +112,18 @@ export default function ServerChatDocsPage() {
     "status": "pending",
     "taskType": "rag",
     "model": "OCT3Q"
+  }
+}`,
+            },
+            {
+              title: "200 OK — translate job",
+              body: `{
+  "ok": true,
+  "job": {
+    "id": "507f1f77bcf86cd799439011",
+    "status": "pending",
+    "taskType": "translate",
+    "model": "TRANSLATE"
   }
 }`,
             },

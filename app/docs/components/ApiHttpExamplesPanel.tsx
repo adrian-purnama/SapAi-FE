@@ -213,6 +213,11 @@ function ChatJobExamples({
   const [model, setModel] = useState<string>(ALLOWED_CHAT_MODEL_IDS[0]);
   const [role, setRole] = useState<MessageRole>("user");
   const [content, setContent] = useState("Hello");
+  const [sourceLang, setSourceLang] = useState("English");
+  const [sourceCode, setSourceCode] = useState("en");
+  const [targetLang, setTargetLang] = useState("Indonesian");
+  const [targetCode, setTargetCode] = useState("id");
+  const [translateText, setTranslateText] = useState("Hello, how are you?");
   const [maxTokens, setMaxTokens] = useState("500");
   const [outputJsonTemplate, setOutputJsonTemplate] = useState("");
   const [taskTypeOptions, setTaskTypeOptions] = useState<string[]>(() => [...TASK_TYPES]);
@@ -222,9 +227,24 @@ function ChatJobExamples({
     { id: newRowId(), propertyKey: "uniqueName", placeholder: "$uniqueName" },
   ]);
 
+  const isTranslate = taskType === "translate";
+
   const body = useMemo(() => {
     const n = Number.parseInt(maxTokens, 10);
     const max = Number.isFinite(n) && n > 0 ? n : 500;
+
+    if (isTranslate) {
+      return {
+        taskType: "translate",
+        sourceLang: sourceLang.trim() || "English",
+        sourceCode: sourceCode.trim() || "en",
+        targetLang: targetLang.trim() || "Indonesian",
+        targetCode: targetCode.trim() || "id",
+        text: translateText.trim() || "Hello, how are you?",
+        maxTokens: max,
+      };
+    }
+
     const text = content.trim() || "Hello";
     const base: Record<string, unknown> = {
       taskType,
@@ -237,7 +257,20 @@ function ChatJobExamples({
       base.outputJsonTemplate = t;
     }
     return base;
-  }, [taskType, model, role, content, maxTokens, outputJsonTemplate]);
+  }, [
+    taskType,
+    isTranslate,
+    model,
+    role,
+    content,
+    sourceLang,
+    sourceCode,
+    targetLang,
+    targetCode,
+    translateText,
+    maxTokens,
+    outputJsonTemplate,
+  ]);
 
   const req = useMemo(
     () =>
@@ -338,28 +371,32 @@ function ChatJobExamples({
             options={taskTypeOptions.map((t) => ({ value: t, label: t }))}
           />
 
-          <SearchableSelect
-            ui="square"
-            label="model"
-            value={model}
-            onChange={(v) => setModel(v)}
-            options={modelOptions.map((m) => ({ value: m, label: m }))}
-          />
+          {!isTranslate ? (
+            <SearchableSelect
+              ui="square"
+              label="model"
+              value={model}
+              onChange={(v) => setModel(v)}
+              options={modelOptions.map((m) => ({ value: m, label: m }))}
+            />
+          ) : null}
 
-          <label className="block text-sm">
-            <span className="font-medium text-zinc-700">input[0].role</span>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as MessageRole)}
-              className={fieldClass}
-            >
-              {MESSAGE_ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </label>
+          {!isTranslate ? (
+            <label className="block text-sm">
+              <span className="font-medium text-zinc-700">input[0].role</span>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as MessageRole)}
+                className={fieldClass}
+              >
+                {MESSAGE_ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
 
           <label className="block text-sm">
             <span className="font-medium text-zinc-700">maxTokens</span>
@@ -374,17 +411,69 @@ function ChatJobExamples({
           </label>
         </div>
 
-        <label className="mt-4 block text-sm">
-          <span className="font-medium text-zinc-700">input[0].content</span>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={4}
-            spellCheck={false}
-            className={fieldClass}
-          />
-        </label>
+        {isTranslate ? (
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <label className="block text-sm">
+              <span className="font-medium text-zinc-700">sourceLang</span>
+              <input
+                type="text"
+                value={sourceLang}
+                onChange={(e) => setSourceLang(e.target.value)}
+                className={fieldClass}
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium text-zinc-700">sourceCode</span>
+              <input
+                type="text"
+                value={sourceCode}
+                onChange={(e) => setSourceCode(e.target.value)}
+                className={fieldClass}
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium text-zinc-700">targetLang</span>
+              <input
+                type="text"
+                value={targetLang}
+                onChange={(e) => setTargetLang(e.target.value)}
+                className={fieldClass}
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="font-medium text-zinc-700">targetCode</span>
+              <input
+                type="text"
+                value={targetCode}
+                onChange={(e) => setTargetCode(e.target.value)}
+                className={fieldClass}
+              />
+            </label>
+            <label className="block text-sm sm:col-span-2">
+              <span className="font-medium text-zinc-700">text</span>
+              <textarea
+                value={translateText}
+                onChange={(e) => setTranslateText(e.target.value)}
+                rows={4}
+                spellCheck={false}
+                className={fieldClass}
+              />
+            </label>
+          </div>
+        ) : (
+          <label className="mt-4 block text-sm">
+            <span className="font-medium text-zinc-700">input[0].content</span>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={4}
+              spellCheck={false}
+              className={fieldClass}
+            />
+          </label>
+        )}
 
+        {!isTranslate ? (
         <div className="mt-6 border-t border-zinc-200 pt-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
             Output JSON template (optional)
@@ -481,6 +570,7 @@ function ChatJobExamples({
             </div>
           </div>
         </div>
+        ) : null}
       </div>
 
       <SnippetBlocks

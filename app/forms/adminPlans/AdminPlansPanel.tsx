@@ -1,22 +1,78 @@
 "use client";
 
 import { useState } from "react";
-import { Layers, Plus, RefreshCw } from "lucide-react";
+import { Layers, Pencil, Plus, RefreshCw, X } from "lucide-react";
 
 import AdminPlanForm from "./AdminPlanForm";
 import { EMPTY_PLAN_INPUT, planToInput, type AdminPlan, type AdminPlanInput } from "./types";
 import { useAdminPlans } from "./useAdminPlans";
+import styles from "./AdminPlansPanel.module.css";
 
-function pill(active: boolean, label: string) {
+function formatRateLimit(n: number) {
+  return n === 0 ? "∞ req/min" : `${n} req/min`;
+}
+
+function PlanCard({
+  plan,
+  selected,
+  onSelect,
+}: {
+  plan: AdminPlan;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const price =
+    plan.priceLabel?.trim() ?
+      [plan.priceLabel, plan.priceNote?.trim()].filter(Boolean).join(" ")
+    : null;
+
   return (
-    <span
-      className={
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold " +
-        (active ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-zinc-200 bg-zinc-50 text-zinc-600")
-      }
+    <button
+      type="button"
+      onClick={onSelect}
+      className={[
+        styles.planCard,
+        selected ? styles.planCardSelected : "",
+        !plan.isActive ? styles.planCardInactive : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-pressed={selected}
+      aria-label={`Edit ${plan.name}`}
     >
-      {label}
-    </span>
+      <div className={styles.planCardHeader}>
+        <div className={styles.planCardTitle}>
+          <p className={styles.planName}>{plan.name}</p>
+          <p className={styles.planSlug}>{plan.slug}</p>
+        </div>
+        {price ? <span className={styles.planPrice}>{price}</span> : null}
+      </div>
+
+      {plan.description?.trim() ? (
+        <p className={styles.planDescription}>{plan.description}</p>
+      ) : null}
+
+      <div className={styles.statRow}>
+        <span className={styles.statChip}>{formatRateLimit(plan.rateLimitPerMinute)}</span>
+        <span className={styles.statChip}>{plan.maxCharacterPerMessage.toLocaleString()} chars</span>
+        <span className={styles.statChip}>{plan.maxApiKeys} keys</span>
+        <span className={styles.statChip}>
+          {plan.maxPdfUpload} PDF · {plan.maxPdfMb} MB
+        </span>
+      </div>
+
+      <div className={styles.badgeRow}>
+        <span className={`${styles.badge} ${plan.isActive ? styles.badgeActive : styles.badgeInactive}`}>
+          {plan.isActive ? "Active" : "Inactive"}
+        </span>
+        {plan.isDefault ? (
+          <span className={`${styles.badge} ${styles.badgeDefault}`}>Default</span>
+        ) : null}
+        {plan.isPriority ? (
+          <span className={`${styles.badge} ${styles.badgePriority}`}>Priority</span>
+        ) : null}
+      </div>
+    </button>
   );
 }
 
@@ -65,134 +121,111 @@ export default function AdminPlansPanel() {
     closeEditor();
   }
 
+  const editorOpen = editorMode !== "none";
+  const editingPlan = editingId ? plans.find((p) => p.id === editingId) : null;
+
   return (
-    <section className="mt-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 shadow-sm">
-            <Layers className="h-5 w-5" aria-hidden />
-          </span>
-          <div>
-            <h2 className="text-lg font-semibold text-zinc-900">Plans</h2>
-            <p className="mt-0.5 text-sm text-zinc-600">
-              Subscription limits stored in MongoDB and kept in server memory for fast lookups.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void refetch()}
-            className="inline-flex h-10 items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 text-sm font-semibold text-zinc-800 shadow-sm transition hover:bg-zinc-50"
-          >
-            <RefreshCw className="mr-2 h-4 w-4" aria-hidden />
+    <section className={styles.panel} aria-label="Subscription plans">
+      <div className={styles.toolbar}>
+        <p className={styles.toolbarMeta}>
+          {loading ? "Loading…" : `${plans.length} plan${plans.length === 1 ? "" : "s"} in MongoDB`}
+        </p>
+        <div className={styles.toolbarActions}>
+          <button type="button" onClick={() => void refetch()} className={styles.iconBtn}>
+            <RefreshCw className="h-4 w-4" aria-hidden />
             Refresh
           </button>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="inline-flex h-10 items-center justify-center rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800"
-          >
-            <Plus className="mr-2 h-4 w-4" aria-hidden />
+          <button type="button" onClick={openCreate} className={styles.primaryBtn}>
+            <Plus className="h-4 w-4" aria-hidden />
             New plan
           </button>
         </div>
       </div>
 
       {!hasAuth ? (
-        <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <div className={`${styles.stateBox} ${styles.stateBoxWarn}`}>
           Authentication required (admin).
-        </p>
+        </div>
       ) : loading ? (
-        <p className="mt-4 text-sm text-zinc-600">Loading plans…</p>
+        <div className={styles.stateBox}>Loading plans…</div>
       ) : error ? (
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <p className="text-sm text-zinc-600">{error}</p>
-          <button
-            type="button"
-            onClick={() => void refetch()}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
-          >
+        <div className={`${styles.stateBox} ${styles.stateBoxError}`}>
+          <span>{error}</span>
+          <button type="button" onClick={() => void refetch()} className={styles.retryBtn}>
             Retry
           </button>
         </div>
       ) : (
-        <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_minmax(0,420px)]">
-          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+        <div
+          className={[styles.layout, editorOpen ? styles.layoutWithEditor : ""].filter(Boolean).join(" ")}
+        >
+          <div className={styles.listRegion}>
+            {editorOpen ? (
+              <div className={styles.mobileEditorBanner}>
+                <span className="inline-flex items-center gap-2">
+                  <Pencil className="h-4 w-4 shrink-0" aria-hidden />
+                  {editorMode === "create" ? "Creating new plan" : `Editing ${editingPlan?.name ?? "plan"}`}
+                </span>
+                <button
+                  type="button"
+                  onClick={closeEditor}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-violet-200 bg-white text-violet-800"
+                  aria-label="Close editor"
+                >
+                  <X className="h-4 w-4" aria-hidden />
+                </button>
+              </div>
+            ) : null}
+
             {plans.length === 0 ? (
-              <p className="px-6 py-8 text-sm text-zinc-600">
-                No plans yet. Create free, pro, and scale to match your pricing page.
-              </p>
+              <div className={styles.stateBox}>
+                <Layers className="mx-auto mb-2 h-8 w-8 text-zinc-400" aria-hidden />
+                <p>No plans yet.</p>
+                <p className="mt-1 text-sm text-zinc-500">
+                  Create free, pro, and scale to match your pricing page.
+                </p>
+                <button type="button" onClick={openCreate} className={`${styles.primaryBtn} mt-4`}>
+                  <Plus className="h-4 w-4" aria-hidden />
+                  Create first plan
+                </button>
+              </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-left text-sm">
-                  <thead className="bg-zinc-50 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                    <tr>
-                      <th className="px-4 py-3">Plan</th>
-                      <th className="px-4 py-3">Req/min</th>
-                      <th className="px-4 py-3">Chars/msg</th>
-                      <th className="px-4 py-3">Keys</th>
-                      <th className="px-4 py-3">PDFs</th>
-                      <th className="px-4 py-3">MB</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3" />
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100">
-                    {plans.map((p) => (
-                      <tr key={p.id} className={editingId === p.id ? "bg-violet-50/50" : undefined}>
-                        <td className="px-4 py-3">
-                          <p className="font-semibold text-zinc-900">{p.name}</p>
-                          <p className="font-mono text-xs text-zinc-500">{p.slug}</p>
-                          {p.isDefault ? (
-                            <span className="mt-1 inline-block text-xs font-medium text-violet-700">Default</span>
-                          ) : null}
-                        </td>
-                        <td className="px-4 py-3 text-zinc-700">
-                          {p.rateLimitPerMinute === 0 ? "∞" : p.rateLimitPerMinute}
-                        </td>
-                        <td className="px-4 py-3 text-zinc-700">{p.maxCharacterPerMessage}</td>
-                        <td className="px-4 py-3 text-zinc-700">{p.maxApiKeys}</td>
-                        <td className="px-4 py-3 text-zinc-700">{p.maxPdfUpload}</td>
-                        <td className="px-4 py-3 text-zinc-700">{p.maxPdfMb}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex flex-wrap gap-1">
-                            {pill(p.isActive, p.isActive ? "active" : "inactive")}
-                            {p.isPriority ? pill(true, "priority") : null}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() => openEdit(p)}
-                            className="text-sm font-semibold text-zinc-800 hover:text-zinc-950"
-                          >
-                            Edit
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className={styles.cardGrid}>
+                {plans.map((plan) => (
+                  <PlanCard
+                    key={plan.id}
+                    plan={plan}
+                    selected={editingId === plan.id}
+                    onSelect={() => openEdit(plan)}
+                  />
+                ))}
               </div>
             )}
           </div>
 
-          {editorMode !== "none" ? (
-            <AdminPlanForm
-              mode={editorMode}
-              value={draft}
-              onChange={setDraft}
-              saving={saving}
-              onSubmit={handleSubmit}
-              onCancel={closeEditor}
-              onDelete={editorMode === "edit" ? handleDelete : undefined}
-            />
-          ) : (
-            <div className="flex items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/50 p-8 text-center text-sm text-zinc-500">
-              Select a plan to edit or create a new one.
-            </div>
-          )}
+          <div className={styles.editorRegion}>
+            {editorOpen ? (
+              <div className={styles.editorSticky}>
+                <AdminPlanForm
+                  mode={editorMode}
+                  value={draft}
+                  onChange={setDraft}
+                  saving={saving}
+                  onSubmit={handleSubmit}
+                  onCancel={closeEditor}
+                  onDelete={editorMode === "edit" ? handleDelete : undefined}
+                />
+              </div>
+            ) : (
+              <div className={styles.emptyEditor}>
+                <Pencil className="h-5 w-5 text-zinc-400" aria-hidden />
+                <p className={styles.emptyEditorTitle}>Select a plan to edit</p>
+                <p className={styles.emptyEditorHint}>
+                  Click a plan card or use New plan to open the editor here.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </section>
