@@ -34,13 +34,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full overflow-x-clip antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-zinc-50 text-zinc-900 antialiased">
+      <body className="flex min-h-full flex-col overflow-x-clip bg-zinc-50 text-zinc-900 antialiased">
         <SapAiProvider>
-          <AppChrome />
-          <AppToaster />
-          {children}
+          <div className="flex min-w-0 flex-1 flex-col overflow-x-clip">
+            <AppChrome />
+            <AppToaster />
+            <div className="min-w-0 flex-1 overflow-x-clip">{children}</div>
+          </div>
         </SapAiProvider>
         <SapAiSiteEmbed src={SITE_EMBED_IFRAME_SRC} />
       </body>

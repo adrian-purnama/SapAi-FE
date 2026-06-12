@@ -12,6 +12,15 @@ const nextConfig: NextConfig = {
    * Bundling it into `.next` breaks worker paths under Turbopack.
    */
   serverExternalPackages: ["pdf-parse", "pdfjs-dist"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "drive.amfphub.com",
+        pathname: "/api/public/**",
+      },
+    ],
+  },
   async redirects() {
     return [
       {

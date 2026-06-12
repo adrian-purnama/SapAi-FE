@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
 
+import { getAllPostSlugs } from "@/app/blog/posts";
 import { getSiteOrigin } from "@/lib/site-metadata";
 
-const BLOG_SLUGS = ["welcome-to-sapai", "security-and-privacy"] as const;
 const PRICING_TIERS = ["free", "pro", "scale"] as const;
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -10,10 +10,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
   const staticRoutes: MetadataRoute.Sitemap = [
-  { url: `${origin}/`, lastModified: now, changeFrequency: "weekly", priority: 1 },
-  { url: `${origin}/pricing`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-  { url: `${origin}/docs/api`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
-  { url: `${origin}/blog`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${origin}/`, lastModified: now, changeFrequency: "weekly", priority: 1 },
+    { url: `${origin}/pricing`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${origin}/docs/api`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${origin}/blog`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
   ];
 
   const pricingRoutes: MetadataRoute.Sitemap = PRICING_TIERS.map((tier) => ({
@@ -23,7 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  const blogRoutes: MetadataRoute.Sitemap = BLOG_SLUGS.map((slug) => ({
+  const blogRoutes: MetadataRoute.Sitemap = getAllPostSlugs().map((slug) => ({
     url: `${origin}/blog/${slug}`,
     lastModified: now,
     changeFrequency: "monthly",

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { CodeBlock } from "@/app/docs/components/docsCodeBlock";
+import { DocsSubsection } from "@/app/docs/components/DocsSubsection";
 import { MethodBadge } from "@/app/docs/components/docsMethodBadge";
 
 export type ApiDocExample = { title: string; body: string };
@@ -8,6 +9,9 @@ export type ApiDocExample = { title: string; body: string };
 type Props = {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   path: string;
+  /** Optional page section label above the endpoint card (e.g. Chat, RAG). */
+  sectionHeading?: string;
+  sectionId?: string;
   /** e.g. "Public", "API key", "Embed token" */
   authLabel?: string;
   description: ReactNode;
@@ -20,9 +24,19 @@ type Props = {
   className?: string;
 };
 
+function AuthPill({ label }: { label: string }) {
+  return (
+    <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-0.5 text-xs font-medium text-zinc-600">
+      {label}
+    </span>
+  );
+}
+
 export function ApiEndpointSection({
   method,
   path,
+  sectionHeading,
+  sectionId,
   authLabel,
   description,
   tryIt,
@@ -34,56 +48,61 @@ export function ApiEndpointSection({
   const hasExamples = exampleRequests.length > 0 || exampleResponses.length > 0;
 
   return (
-    <section className={`scroll-mt-24 border-b border-zinc-200 pb-10 ${className}`.trim()}>
-      <div className="flex flex-wrap items-center gap-2">
-        <MethodBadge method={method} />
-        <code className="font-mono text-sm text-zinc-800">{path}</code>
-        {authLabel ? <span className="text-sm text-zinc-500">{authLabel}</span> : null}
-      </div>
+    <article id={sectionId} className={`min-w-0 scroll-mt-24 space-y-8 ${className}`.trim()}>
+      {sectionHeading ? (
+        <h2 className="text-xl font-semibold tracking-tight text-zinc-900">{sectionHeading}</h2>
+      ) : null}
+      <header className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <MethodBadge method={method} />
+          <code className="font-mono text-base font-semibold text-zinc-900">{path}</code>
+          {authLabel ? <AuthPill label={authLabel} /> : null}
+        </div>
+        <div className="mt-4 text-base leading-relaxed text-zinc-600">{description}</div>
+      </header>
 
-      <div className="mt-4 text-sm leading-relaxed text-zinc-700">{description}</div>
-
-      <div className="mt-6">
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">1 · Try it</p>
-        <p className="mt-1 text-xs text-zinc-600">
-          Set your credentials in <strong className="font-medium text-zinc-800">API settings</strong> at
-          the top of the page, then click <strong className="font-medium text-zinc-800">Run request</strong>. Your live
-          response appears below the button.
-        </p>
-        <div className="mt-3">{tryIt}</div>
-      </div>
+      <DocsSubsection variant="primary" title="Try it">
+        {tryIt}
+      </DocsSubsection>
 
       {hasExamples ? (
-        <div className="mt-8">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">2 · Example payloads</p>
-          <p className="mt-1 text-xs text-zinc-600">
-            Reference shapes — your live response may differ slightly (ids, timestamps, plan limits).
-          </p>
-          <div className="mt-3 space-y-3">
-            {exampleRequests.map((ex) => (
-              <CodeBlock key={`req-${ex.title}`} title={ex.title}>
-                {ex.body}
-              </CodeBlock>
-            ))}
-            {exampleResponses.map((ex) => (
-              <CodeBlock key={`res-${ex.title}`} title={ex.title}>
-                {ex.body}
-              </CodeBlock>
-            ))}
-          </div>
-        </div>
+        <DocsSubsection
+          variant="secondary"
+          title="Example payloads"
+          description="Reference shapes — your live response may differ (ids, timestamps, plan limits)."
+        >
+          {exampleRequests.length > 0 ? (
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Requests</p>
+              <div className="space-y-3">
+                {exampleRequests.map((ex) => (
+                  <CodeBlock key={`req-${ex.title}`} title={ex.title} variant="request">
+                    {ex.body}
+                  </CodeBlock>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {exampleResponses.length > 0 ? (
+            <div className={exampleRequests.length > 0 ? "mt-6 space-y-3" : "space-y-3"}>
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Responses</p>
+              <div className="space-y-3">
+                {exampleResponses.map((ex) => (
+                  <CodeBlock key={`res-${ex.title}`} title={ex.title} variant="response">
+                    {ex.body}
+                  </CodeBlock>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </DocsSubsection>
       ) : null}
 
       {reference ? (
-        <div className={hasExamples ? "mt-6" : "mt-8"}>
-          {hasExamples ? (
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">3 · Reference</p>
-          ) : (
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">2 · Reference</p>
-          )}
+        <DocsSubsection variant="muted" title="Reference" collapsible defaultOpen={false}>
           <div className="space-y-3 text-sm leading-relaxed text-zinc-700">{reference}</div>
-        </div>
+        </DocsSubsection>
       ) : null}
-    </section>
+    </article>
   );
 }

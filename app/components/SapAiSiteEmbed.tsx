@@ -4,7 +4,7 @@ import { MessageCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { EMBED_IFRAME_H, EMBED_IFRAME_INLINE_STYLE, EMBED_IFRAME_W } from "@/lib/embed-iframe";
+import { EMBED_IFRAME_INLINE_STYLE } from "@/lib/embed-iframe";
 import { isSapAiEmbedMessage, withEmbedWidgetParam } from "@/lib/embed-post-message";
 
 const SITE_EMBED_OPEN_KEY = "sapai-site-embed-open";
@@ -108,8 +108,6 @@ export function SapAiSiteEmbed({ src }: Props) {
         id="sapai-embed-widget"
         src={widgetSrc}
         title="SapAi assistant"
-        width={EMBED_IFRAME_W}
-        height={EMBED_IFRAME_H}
         style={{
           ...EMBED_IFRAME_INLINE_STYLE,
           display: open ? "block" : "none",

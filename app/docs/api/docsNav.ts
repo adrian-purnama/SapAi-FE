@@ -8,8 +8,24 @@
  * 4. Use `ApiHttpExamplesPanel` inside `tryIt` for Run request + code samples.
  */
 
-export type DocsNavItem = { href: string; label: string; summary?: string };
+export type DocsNavSubItem = { hash: string; label: string };
+
+export type DocsNavItem = {
+  href: string;
+  label: string;
+  summary?: string;
+  /** In-page anchors shown nested under this link in the sidebar. */
+  subItems?: DocsNavSubItem[];
+};
+
 export type DocsNavGroup = { group: string; items: DocsNavItem[] };
+
+export const CHAT_JOBS_SUB_ITEMS: DocsNavSubItem[] = [
+  { hash: "chat", label: "Chat" },
+  { hash: "rag", label: "RAG" },
+  { hash: "translate", label: "Translate" },
+  { hash: "check", label: "Check" },
+];
 
 export const API_DOCS_NAV: DocsNavGroup[] = [
   {
@@ -32,7 +48,7 @@ export const API_DOCS_NAV: DocsNavGroup[] = [
     items: [
       {
         href: "/docs/api/server/test",
-        label: "Test Api Key",
+        label: "Test API key",
         summary: "GET /test/api-key for connectivity and API key check.",
       },
       {
@@ -43,7 +59,8 @@ export const API_DOCS_NAV: DocsNavGroup[] = [
       {
         href: "/docs/api/server/chat",
         label: "Chat jobs",
-        summary: "POST /api/v1/chat — enqueue a job; GET /api/v1/chat/jobs/:id — fetch status and result.",
+        summary: "POST /api/v1/chat — chat, RAG, translate; poll and stream with a shared job id.",
+        subItems: CHAT_JOBS_SUB_ITEMS,
       },
     ],
   },

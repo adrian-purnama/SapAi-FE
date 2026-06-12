@@ -86,12 +86,18 @@ type PageMetadataOptions = {
   path?: string;
   noIndex?: boolean;
   openGraphType?: "website" | "article";
+  openGraphImages?: Array<{ url: string; alt?: string }>;
 };
 
 export async function buildPageMetadata(options: PageMetadataOptions): Promise<Metadata> {
   const config = await getPublicAppConfigForMetadata();
   const metadataBase = getSiteMetadataBase();
   const socialImage = getOpenGraphImageUrl(config, metadataBase);
+  const ogImages =
+    options.openGraphImages?.length && options.openGraphImages.length > 0
+      ? options.openGraphImages
+      : [{ url: socialImage }];
+  const twitterImages = ogImages.map((img) => img.url);
   const canonicalPath = options.path?.startsWith("/") ? options.path : options.path ? `/${options.path}` : undefined;
   const canonical = canonicalPath && metadataBase ? new URL(canonicalPath, metadataBase).toString() : undefined;
 
@@ -108,13 +114,13 @@ export async function buildPageMetadata(options: PageMetadataOptions): Promise<M
       title: options.title,
       description: options.description,
       url: canonical,
-      images: [{ url: socialImage }],
+      images: ogImages,
     },
     twitter: {
       card: "summary_large_image",
       title: options.title,
       description: options.description,
-      images: [socialImage],
+      images: twitterImages,
     },
   };
 }

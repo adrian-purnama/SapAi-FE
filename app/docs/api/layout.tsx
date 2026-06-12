@@ -9,8 +9,8 @@ import { DocsApiSidebar } from "./DocsApiSidebar";
 export default function DocsApiLayout({ children }: { children: ReactNode }) {
   return (
     <ApiDocsSettingsProvider>
-      <div className="mx-auto max-w-6xl px-4 py-10">
-        <p className="text-sm font-medium text-zinc-500">
+      <div className="mx-auto min-w-0 max-w-6xl overflow-x-clip px-4 py-8">
+        <p className="text-xs font-medium text-zinc-500">
           <Link href="/" className="hover:text-zinc-800">
             Home
           </Link>
@@ -24,9 +24,9 @@ export default function DocsApiLayout({ children }: { children: ReactNode }) {
 
         <StandaloneDocsToolbar />
 
-        <div className="mt-6 flex flex-col gap-10 lg:flex-row lg:gap-12">
+        <div className="mt-8 flex flex-col gap-10 lg:flex-row lg:gap-16">
           <DocsApiSidebar />
-          <div className="min-w-0 flex-1">{children}</div>
+          <div className="min-w-0 max-w-3xl flex-1">{children}</div>
         </div>
       </div>
     </ApiDocsSettingsProvider>

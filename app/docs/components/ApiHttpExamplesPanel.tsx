@@ -26,6 +26,16 @@ const fieldClass =
 const btnSecondaryClass =
   "inline-flex items-center rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-800 shadow-sm hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-400";
 
+function extractJobIdFromResponse(text: string): string | null {
+  try {
+    const json = JSON.parse(text) as { job?: { id?: unknown }; id?: unknown };
+    const id = json.job?.id ?? json.id;
+    return typeof id === "string" && id.trim().length > 0 ? id.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
 function newRowId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
@@ -52,9 +62,24 @@ export type ApiHttpExamplesSimpleProps = {
 export type ApiHttpExamplesChatJobProps = {
   variant: "chatJob";
   target?: SnippetTarget;
+  /** Lock the form to one task type (hides taskType selector). */
+  fixedTaskType?: TaskType;
+  /** Called when POST /api/v1/chat returns a job.id in the response. */
+  onJobIdCaptured?: (jobId: string) => void;
 };
 
-export type ApiHttpExamplesPanelProps = ApiHttpExamplesSimpleProps | ApiHttpExamplesChatJobProps;
+export type ApiHttpExamplesJobPollProps = {
+  variant: "jobPoll";
+  target?: SnippetTarget;
+  jobId: string;
+  onJobIdChange: (jobId: string) => void;
+  defaultJobId?: string;
+};
+
+export type ApiHttpExamplesPanelProps =
+  | ApiHttpExamplesSimpleProps
+  | ApiHttpExamplesChatJobProps
+  | ApiHttpExamplesJobPollProps;
 
 function readEnvNextAppBase(): string {
   return (
@@ -76,6 +101,21 @@ export function ApiHttpExamplesPanel(props: ApiHttpExamplesPanelProps) {
         target={props.target ?? "standalone"}
         standaloneBase={ctx.baseUrl}
         nextAppBase={nextAppBase}
+        fixedTaskType={props.fixedTaskType}
+        onJobIdCaptured={props.onJobIdCaptured}
+      />
+    );
+  }
+
+  if (props.variant === "jobPoll") {
+    return (
+      <JobPollExamples
+        target={props.target ?? "standalone"}
+        standaloneBase={ctx.baseUrl}
+        nextAppBase={nextAppBase}
+        jobId={props.jobId}
+        onJobIdChange={props.onJobIdChange}
+        defaultJobId={props.defaultJobId}
       />
     );
   }
@@ -157,19 +197,13 @@ function SimpleExamples({
   );
 
   return (
-    <div className="mt-4 space-y-4">
+    <div className="space-y-4">
       {jobIdPathPrefix ? (
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50/80 p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Path</p>
-          <p className="mt-1 text-sm text-zinc-600">
-            Set <strong className="font-medium text-zinc-800">Job id</strong> from{" "}
-            <code className="font-mono text-xs">POST /api/v1/chat</code> (
-            <code className="font-mono text-xs">job.id</code>).{" "}
-            <strong className="font-medium text-zinc-800">API key</strong> stays in Standalone API
-            settings at the top.
-          </p>
-          <label className="mt-4 block text-sm">
-            <span className="font-medium text-zinc-700">Job id</span>
+        <div className="rounded-lg border border-zinc-200 bg-white p-4">
+          <label className="block text-sm">
+            <span className="font-medium text-zinc-700">
+              Job id <span className="font-normal text-zinc-500">from POST /api/v1/chat → job.id</span>
+            </span>
             <input
               type="text"
               value={jobId}
@@ -197,19 +231,97 @@ function SimpleExamples({
   );
 }
 
+function JobPollExamples({
+  target,
+  standaloneBase,
+  nextAppBase,
+  jobId,
+  onJobIdChange,
+  defaultJobId,
+}: {
+  target: SnippetTarget;
+  standaloneBase: string;
+  nextAppBase: string;
+  jobId: string;
+  onJobIdChange: (jobId: string) => void;
+  defaultJobId?: string;
+}) {
+  const ctx = useApiDocsSettings();
+  const fallbackJobId = defaultJobId?.trim() || "507f1f77bcf86cd799439011";
+  const prefix = "/api/v1/chat/jobs";
+
+  const resolvedPath = useMemo(() => {
+    const id = jobId.trim() || fallbackJobId;
+    return `${prefix}/${id}`;
+  }, [jobId, fallbackJobId]);
+
+  const req = useMemo(
+    () =>
+      resolveSnippetRequest({
+        target,
+        standaloneBase,
+        nextAppBase,
+        method: "GET",
+        path: resolvedPath,
+        includeApiKeyHeader: true,
+        apiKeyValue: ctx.apiKey,
+      }),
+    [target, standaloneBase, nextAppBase, resolvedPath, ctx.apiKey],
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-zinc-200 bg-white p-4">
+        <label className="block text-sm">
+          <span className="font-medium text-zinc-700">
+            Job id <span className="font-normal text-zinc-500">shared across this page</span>
+          </span>
+          <input
+            type="text"
+            value={jobId}
+            onChange={(e) => onJobIdChange(e.target.value)}
+            spellCheck={false}
+            autoComplete="off"
+            placeholder={fallbackJobId}
+            className={fieldClass}
+          />
+        </label>
+        <p className="mt-2 font-mono text-xs text-zinc-500">
+          → <span className="text-zinc-700">{resolvedPath}</span>
+        </p>
+        <p className="mt-2 text-xs text-zinc-500">
+          Auto-filled when you Run a chat, RAG, or translate job above. Edit manually if needed.
+        </p>
+      </div>
+
+      <SnippetBlocks
+        req={req}
+        baseHint={target === "standalone" ? "standalone" : "next"}
+        runCredentials={target === "nextApp" ? "include" : "omit"}
+        requiresApiKey
+        apiKeyPresent={ctx.apiKey.trim().length > 0}
+      />
+    </div>
+  );
+}
+
 type TemplateBuilderRow = { id: string; propertyKey: string; placeholder: string };
 
 function ChatJobExamples({
   target,
   standaloneBase,
   nextAppBase,
+  fixedTaskType,
+  onJobIdCaptured,
 }: {
   target: SnippetTarget;
   standaloneBase: string;
   nextAppBase: string;
+  fixedTaskType?: TaskType;
+  onJobIdCaptured?: (jobId: string) => void;
 }) {
   const ctx = useApiDocsSettings();
-  const [taskType, setTaskType] = useState<TaskType>("chat");
+  const [taskType, setTaskType] = useState<TaskType>(fixedTaskType ?? "chat");
   const [model, setModel] = useState<string>(ALLOWED_CHAT_MODEL_IDS[0]);
   const [role, setRole] = useState<MessageRole>("user");
   const [content, setContent] = useState("Hello");
@@ -227,7 +339,12 @@ function ChatJobExamples({
     { id: newRowId(), propertyKey: "uniqueName", placeholder: "$uniqueName" },
   ]);
 
-  const isTranslate = taskType === "translate";
+  const effectiveTaskType = fixedTaskType ?? taskType;
+  const isTranslate = effectiveTaskType === "translate";
+
+  useEffect(() => {
+    if (fixedTaskType) setTaskType(fixedTaskType);
+  }, [fixedTaskType]);
 
   const body = useMemo(() => {
     const n = Number.parseInt(maxTokens, 10);
@@ -247,7 +364,7 @@ function ChatJobExamples({
 
     const text = content.trim() || "Hello";
     const base: Record<string, unknown> = {
-      taskType,
+      taskType: effectiveTaskType,
       model,
       input: [{ role, content: text }],
       maxTokens: max,
@@ -258,7 +375,7 @@ function ChatJobExamples({
     }
     return base;
   }, [
-    taskType,
+    effectiveTaskType,
     isTranslate,
     model,
     role,
@@ -349,27 +466,18 @@ function ChatJobExamples({
   };
 
   return (
-    <div className="mt-6 space-y-4">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Request body</p>
-        <p className="mt-1 text-sm text-zinc-600">
-          One message becomes <code className="font-mono text-xs">input[0]</code>. Optional{" "}
-          <code className="font-mono text-xs">outputJsonTemplate</code> adds structured JSON instructions (see
-          below). Set <strong className="font-medium text-zinc-800">API key</strong> only in{" "}
-          <strong className="font-medium text-zinc-800">Standalone API settings</strong> at the top of the
-          page.
-        </p>
-      </div>
-
-      <div className="rounded-xl border border-zinc-200 bg-zinc-50/80 p-4 shadow-sm">
+    <div className="space-y-4">
+      <div className="rounded-lg border border-zinc-200 bg-white p-4">
         <div className="grid gap-4 sm:grid-cols-2">
-          <SearchableSelect
-            ui="square"
-            label="taskType"
-            value={taskType}
-            onChange={(v) => setTaskType(v as TaskType)}
-            options={taskTypeOptions.map((t) => ({ value: t, label: t }))}
-          />
+          {!fixedTaskType ? (
+            <SearchableSelect
+              ui="square"
+              label="taskType"
+              value={taskType}
+              onChange={(v) => setTaskType(v as TaskType)}
+              options={taskTypeOptions.map((t) => ({ value: t, label: t }))}
+            />
+          ) : null}
 
           {!isTranslate ? (
             <SearchableSelect
@@ -473,103 +581,104 @@ function ChatJobExamples({
           </label>
         )}
 
-        {!isTranslate ? (
-        <div className="mt-6 border-t border-zinc-200 pt-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-            Output JSON template (optional)
-          </p>
-          <p className="mt-1 text-sm text-zinc-600">
-            Sent as <code className="font-mono text-xs">outputJsonTemplate</code>. The server prepends a{" "}
-            <code className="font-mono text-xs">system</code> message so the model replies with JSON
-            matching this shape (stored merged into <code className="font-mono text-xs">input</code> on the job).
-          </p>
+        {!isTranslate && effectiveTaskType === "chat" ? (
+          <details className="mt-6 border-t border-zinc-200 pt-4">
+            <summary className="cursor-pointer select-none text-sm font-medium text-zinc-700 marker:text-zinc-400 hover:text-zinc-900">
+              Output JSON template (optional)
+            </summary>
+            <div className="mt-4 space-y-4">
+              <p className="text-sm text-zinc-600">
+                Sent as <code className="font-mono text-xs">outputJsonTemplate</code>. The server prepends a{" "}
+                <code className="font-mono text-xs">system</code> message so the model replies with JSON
+                matching this shape.
+              </p>
 
-          <label className="mt-3 block text-sm">
-            <span className="font-medium text-zinc-700">outputJsonTemplate (raw JSON string)</span>
-            <textarea
-              value={outputJsonTemplate}
-              onChange={(e) => setOutputJsonTemplate(e.target.value)}
-              rows={3}
-              spellCheck={false}
-              placeholder='[{"color":"$color","uniqueName":"$uniqueName"}]'
-              className={fieldClass}
-            />
-          </label>
+              <label className="block text-sm">
+                <span className="font-medium text-zinc-700">outputJsonTemplate (raw JSON string)</span>
+                <textarea
+                  value={outputJsonTemplate}
+                  onChange={(e) => setOutputJsonTemplate(e.target.value)}
+                  rows={3}
+                  spellCheck={false}
+                  placeholder='[{"color":"$color","uniqueName":"$uniqueName"}]'
+                  className={fieldClass}
+                />
+              </label>
 
-          <div className="mt-4 rounded-lg border border-dashed border-zinc-300 bg-white p-3">
-            <p className="text-xs font-semibold text-zinc-600">Template builder</p>
-            <p className="mt-1 text-xs text-zinc-500">
-              One JSON array with one object: property keys and placeholder tokens (e.g.{" "}
-              <code className="font-mono">$color</code>). Generates into the field above.
-            </p>
-            <div className="mt-3 space-y-2">
-              {builderRows.map((br) => (
-                <div key={br.id} className="flex flex-wrap items-end gap-2">
-                  <label className="block min-w-40 flex-1 text-sm">
-                    <span className="font-medium text-zinc-700">property key</span>
-                    <input
-                      type="text"
-                      value={br.propertyKey}
-                      onChange={(e) => {
-                        const propertyKey = e.target.value;
-                        setBuilderRows((rows) =>
-                          rows.map((r) => (r.id === br.id ? { ...r, propertyKey } : r)),
-                        );
-                      }}
-                      spellCheck={false}
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className="block min-w-40 flex-1 text-sm">
-                    <span className="font-medium text-zinc-700">placeholder</span>
-                    <input
-                      type="text"
-                      value={br.placeholder}
-                      onChange={(e) => {
-                        const placeholder = e.target.value;
-                        setBuilderRows((rows) =>
-                          rows.map((r) => (r.id === br.id ? { ...r, placeholder } : r)),
-                        );
-                      }}
-                      spellCheck={false}
-                      placeholder="$color"
-                      className={fieldClass}
-                    />
-                  </label>
+              <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50/80 p-3">
+                <p className="text-xs font-semibold text-zinc-600">Template builder</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Property keys and placeholder tokens (e.g. <code className="font-mono">$color</code>).
+                </p>
+                <div className="mt-3 space-y-2">
+                  {builderRows.map((br) => (
+                    <div key={br.id} className="flex flex-wrap items-end gap-2">
+                      <label className="block min-w-40 flex-1 text-sm">
+                        <span className="font-medium text-zinc-700">property key</span>
+                        <input
+                          type="text"
+                          value={br.propertyKey}
+                          onChange={(e) => {
+                            const propertyKey = e.target.value;
+                            setBuilderRows((rows) =>
+                              rows.map((r) => (r.id === br.id ? { ...r, propertyKey } : r)),
+                            );
+                          }}
+                          spellCheck={false}
+                          className={fieldClass}
+                        />
+                      </label>
+                      <label className="block min-w-40 flex-1 text-sm">
+                        <span className="font-medium text-zinc-700">placeholder</span>
+                        <input
+                          type="text"
+                          value={br.placeholder}
+                          onChange={(e) => {
+                            const placeholder = e.target.value;
+                            setBuilderRows((rows) =>
+                              rows.map((r) => (r.id === br.id ? { ...r, placeholder } : r)),
+                            );
+                          }}
+                          spellCheck={false}
+                          placeholder="$color"
+                          className={fieldClass}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className={`${btnSecondaryClass} mb-0.5`}
+                        disabled={builderRows.length <= 1}
+                        onClick={() =>
+                          setBuilderRows((rows) =>
+                            rows.length <= 1 ? rows : rows.filter((r) => r.id !== br.id),
+                          )
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    className={`${btnSecondaryClass} mb-0.5`}
-                    disabled={builderRows.length <= 1}
+                    className={btnSecondaryClass}
                     onClick={() =>
-                      setBuilderRows((rows) =>
-                        rows.length <= 1 ? rows : rows.filter((r) => r.id !== br.id),
-                      )
+                      setBuilderRows((rows) => [
+                        ...rows,
+                        { id: newRowId(), propertyKey: "", placeholder: "" },
+                      ])
                     }
                   >
-                    Remove
+                    Add property
+                  </button>
+                  <button type="button" className={btnSecondaryClass} onClick={applyGeneratedTemplate}>
+                    Generate JSON template
                   </button>
                 </div>
-              ))}
+              </div>
             </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                className={btnSecondaryClass}
-                onClick={() =>
-                  setBuilderRows((rows) => [
-                    ...rows,
-                    { id: newRowId(), propertyKey: "", placeholder: "" },
-                  ])
-                }
-              >
-                Add property
-              </button>
-              <button type="button" className={btnSecondaryClass} onClick={applyGeneratedTemplate}>
-                Generate JSON template
-              </button>
-            </div>
-          </div>
-        </div>
+          </details>
         ) : null}
       </div>
 
@@ -579,6 +688,7 @@ function ChatJobExamples({
         runCredentials={target === "nextApp" ? "include" : "omit"}
         requiresApiKey
         apiKeyPresent={ctx.apiKey.trim().length > 0}
+        onJobIdCaptured={onJobIdCaptured}
       />
     </div>
   );
@@ -596,12 +706,14 @@ function SnippetBlocks({
   runCredentials,
   requiresApiKey,
   apiKeyPresent,
+  onJobIdCaptured,
 }: {
   req: ReturnType<typeof resolveSnippetRequest>;
   baseHint: "standalone" | "next";
   runCredentials: RequestCredentials;
   requiresApiKey: boolean;
   apiKeyPresent: boolean;
+  onJobIdCaptured?: (jobId: string) => void;
 }) {
   const [activeLang, setActiveLang] = useState<SnippetTabId>("curl");
   const [snippetHtml, setSnippetHtml] = useState("");
@@ -672,6 +784,10 @@ function SnippetBlocks({
       const combined = res.ok ? text : `${banner}\n\n${text}`;
       const html = await highlightRunResponse(combined);
       setRunOutputHtml(html);
+      if (res.ok && onJobIdCaptured) {
+        const captured = extractJobIdFromResponse(text);
+        if (captured) onJobIdCaptured(captured);
+      }
       if (!res.ok) setRunError(banner);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -680,30 +796,27 @@ function SnippetBlocks({
     } finally {
       setRunLoading(false);
     }
-  }, [req, runCredentials, requiresApiKey, apiKeyPresent, runLoading]);
+  }, [req, runCredentials, requiresApiKey, apiKeyPresent, runLoading, onJobIdCaptured]);
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 max-w-full space-y-4">
       {requiresApiKey && !apiKeyPresent ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-          Add an API key under <strong className="font-medium">Standalone API settings</strong> above
-          to enable Run and to substitute a real key in the snippets.
+          Configure your API key in <strong className="font-medium">API settings</strong> above to run
+          requests.
         </p>
       ) : null}
 
-      <div className="rounded-xl border border-sky-200/80 bg-sky-50/40 p-4 shadow-sm">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-sky-900">Live request</p>
-        <p className="mt-1 break-all font-mono text-xs text-zinc-800">
-          <span className="font-semibold text-sky-900">{req.method}</span> {req.url}
-        </p>
-        <p className="mt-2 text-[11px] text-zinc-600">
-          {baseHint === "standalone"
-            ? "Uses Standalone API settings (CORS must allow this site)."
-            : "Uses this app origin; cookies included when relevant."}
+      <div className="min-w-0 max-w-full overflow-hidden rounded-xl border border-sky-200/80 bg-white p-5 shadow-sm">
+        <p className="break-all font-mono text-sm text-zinc-800">
+          <span className="mr-2 inline-flex rounded bg-sky-100 px-1.5 py-0.5 font-bold text-sky-900">
+            {req.method}
+          </span>
+          {req.url}
         </p>
         <button
           type="button"
-          className="mt-3 inline-flex items-center justify-center rounded-lg bg-sky-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-40"
+          className="mt-4 inline-flex items-center justify-center rounded-lg bg-sky-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-800 disabled:cursor-not-allowed disabled:opacity-40"
           disabled={runDisabled}
           onClick={() => void handleRun()}
         >
@@ -724,15 +837,18 @@ function SnippetBlocks({
             />
           </div>
         ) : (
-          <p className="mt-3 text-[11px] text-zinc-500">
-            No response yet — click <strong className="font-medium text-zinc-700">Run request</strong>.
-          </p>
+          <p className="mt-3 text-xs text-zinc-500">Response appears here after you run the request.</p>
         )}
+        <p className="mt-3 text-xs text-zinc-500">
+          {baseHint === "standalone"
+            ? "Uses your configured base URL and API key."
+            : "Uses this app origin; cookies included when relevant."}
+        </p>
       </div>
 
-      <details className="group overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
-        <summary className="cursor-pointer select-none px-3 py-2.5 text-sm font-medium text-zinc-800 marker:text-zinc-400 hover:bg-zinc-50">
-          Code samples (curl, JavaScript, Python)
+      <details className="group min-w-0 max-w-full overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50/50">
+        <summary className="cursor-pointer select-none px-4 py-3 text-sm font-medium text-zinc-600 marker:text-zinc-400 hover:text-zinc-900">
+          Code samples
         </summary>
         <div className="border-t border-zinc-200">
           <div className="overflow-hidden border-b border-zinc-700 bg-[#21222c]">

@@ -84,7 +84,15 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Prevent page-level horizontal scroll from fixed UI, wide code, or 100vw sizing. */
+html {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
 body {
+  overflow-x: clip;
+  max-width: 100%;
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -131,5 +139,17 @@ body {
   }
   html {
     @apply font-sans;
+  }
+
+  :where(img, video, iframe, embed, object, svg) {
+    max-width: 100%;
+  }
+
+  :where(pre, table) {
+    max-width: 100%;
+  }
+
+  pre {
+    overflow-x: auto;
   }
 }

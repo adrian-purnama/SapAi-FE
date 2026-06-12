@@ -173,7 +173,7 @@ export default function Navbar() {
 
   return (
     <header className={shell}>
-      <nav className="mx-auto flex h-[56px] w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+      <nav className="mx-auto flex h-[56px] w-full min-w-0 max-w-7xl items-center justify-between gap-4 overflow-x-clip px-4 sm:px-6">
         <Link
           href="/"
           className="group flex min-w-0 items-center gap-2.5 rounded-xl text-zinc-900 outline-none"

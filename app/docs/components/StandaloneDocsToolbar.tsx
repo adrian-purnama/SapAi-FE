@@ -13,7 +13,7 @@ export function StandaloneDocsToolbar() {
   if (!show) return null;
 
   return (
-    <div className="mb-8">
+    <div className="sticky top-16 z-10 min-w-0 bg-zinc-50/95 py-2 backdrop-blur-sm lg:top-[4.25rem]">
       <StandaloneApiSettingsPanel />
     </div>
   );

@@ -13,4 +13,8 @@ export const EMBED_IFRAME_INLINE_STYLE: CSSProperties = {
   background: "transparent",
   zIndex: 2147483000,
   boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
+  width: `min(${EMBED_IFRAME_W}px, calc(100vw - 40px))`,
+  height: `min(${EMBED_IFRAME_H}px, calc(100dvh - 40px))`,
+  maxWidth: "calc(100vw - 40px)",
+  maxHeight: "calc(100dvh - 40px)",
 };
