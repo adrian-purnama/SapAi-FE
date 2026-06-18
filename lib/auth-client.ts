@@ -73,9 +73,105 @@ type AuthSession = {
 
 const AUTH_STORAGE_KEY = "sapai.auth";
 const AUTH_CHANGE_EVENT = "sapai-auth-changed";
+const AUTH_EXPIRED_EVENT = "sapai-auth-expired";
+
+const AUTH_SESSION_INVALID_CODES = new Set(["UNAUTHORIZED", "INVALID_TOKEN", "USER_NOT_FOUND"]);
+
+const AUTH_ROUTES_SKIP = new Set([
+  "/api/v1/auth/login",
+  "/api/v1/auth/register",
+  "/api/v1/auth/forgot-password",
+  "/api/v1/auth/reset-password",
+]);
+
+let authFetchGuardInstalled = false;
 
 function hasBrowserStorage(): boolean {
   return typeof window !== "undefined" && typeof localStorage !== "undefined";
+}
+
+export function getAuthExpiredEventName() {
+  return AUTH_EXPIRED_EVENT;
+}
+
+export function isAuthSessionInvalidPayload(payload: unknown): boolean {
+  if (!payload || typeof payload !== "object") return false;
+  const o = payload as { success?: boolean; error?: { code?: string } };
+  if (o.success === true) return false;
+  const code = o.error?.code;
+  return typeof code === "string" && AUTH_SESSION_INVALID_CODES.has(code);
+}
+
+/** Clears stored session and notifies listeners (toast / redirect handled in SapAiProvider). */
+export function notifyAuthSessionExpired(): void {
+  if (!hasBrowserStorage()) return;
+  const hadSession = Boolean(getAuthSession());
+  clearAuthSession();
+  if (hadSession) {
+    window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+  }
+}
+
+export async function handleAuthApiResponse(response: Response): Promise<void> {
+  if (response.status !== 401) return;
+  const payload = await response.clone().json().catch(() => null);
+  if (isAuthSessionInvalidPayload(payload)) {
+    notifyAuthSessionExpired();
+  }
+}
+
+function requestUrl(input: RequestInfo | URL): string {
+  if (typeof input === "string") return input;
+  if (input instanceof URL) return input.href;
+  return input.url;
+}
+
+function requestPathname(url: string): string {
+  try {
+    return new URL(url).pathname;
+  } catch {
+    return url;
+  }
+}
+
+function requestHadBearerToken(input: RequestInfo | URL, init?: RequestInit): boolean {
+  const headers = new Headers(init?.headers);
+  if (input instanceof Request) {
+    input.headers.forEach((value, key) => headers.set(key, value));
+  }
+  const auth = headers.get("Authorization");
+  if (auth?.startsWith("Bearer ")) return true;
+  return Boolean(getAuthSession()?.token);
+}
+
+/**
+ * Intercepts 401 auth failures on bearer requests to the SapAi API so expired sessions
+ * are cleared app-wide without editing every fetch call site.
+ */
+export function installAuthFetchGuard(apiBaseUrl: string): void {
+  if (!hasBrowserStorage() || authFetchGuardInstalled) return;
+  authFetchGuardInstalled = true;
+
+  const base = apiBaseUrl.replace(/\/$/, "");
+  const originalFetch = window.fetch.bind(window);
+
+  window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    const response = await originalFetch(input, init);
+    try {
+      const url = requestUrl(input);
+      if (!url.startsWith(base)) return response;
+
+      const pathname = requestPathname(url);
+      if (AUTH_ROUTES_SKIP.has(pathname)) return response;
+      if (!requestHadBearerToken(input, init)) return response;
+      if (response.status !== 401) return response;
+
+      await handleAuthApiResponse(response);
+    } catch {
+      // Never break caller fetch on guard errors.
+    }
+    return response;
+  };
 }
 
 export function setAuthSession(session: AuthSession) {

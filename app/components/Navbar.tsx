@@ -222,6 +222,7 @@ export default function Navbar() {
             items={[
               { label: "API reference", href: "/docs/api", description: "Endpoints and payloads." },
               { label: "Blog", href: "/blog", description: "Product updates and guides." },
+              { label: "Uptime", href: "https://uptime.amfphub.com/status/sapai", description: "Check the status or Incident Reports" },
             ]}
           />
 

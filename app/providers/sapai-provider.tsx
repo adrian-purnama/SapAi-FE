@@ -12,13 +12,19 @@ import {
 import {
   clearAuthSession,
   getAuthChangeEventName,
+  getAuthExpiredEventName,
   getAuthSession,
+  installAuthFetchGuard,
+  isAuthSessionInvalidPayload,
+  notifyAuthSessionExpired,
   parseAuthUserPayload,
   setAuthSession,
   type AuthUser,
 } from "@/lib/auth-client";
 import type { AppPublicConfig } from "@/lib/app-config-public";
-import { joinServerApiPath } from "@/lib/server-api";
+import { joinServerApiPath, getServerApiBaseUrl } from "@/lib/server-api";
+import { toastError } from "@/lib/app-toast";
+import { useRouter } from "next/navigation";
 
 export type { AppPublicConfig };
 
@@ -56,6 +62,7 @@ function readAuthFromStorage() {
 }
 
 export function SapAiProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   /**
    * Important: keep the first client render aligned with server HTML.
    * We hydrate auth from localStorage after mount to avoid hydration mismatch.
@@ -90,6 +97,15 @@ export function SapAiProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    installAuthFetchGuard(getServerApiBaseUrl());
+
+    const onExpired = () => {
+      toastError("Your session has expired. Please log in again.", { id: "auth-expired" });
+      router.push("/login");
+    };
+    const expiredEvt = getAuthExpiredEventName();
+    window.addEventListener(expiredEvt, onExpired);
+
     queueMicrotask(() => {
       const next = readAuthFromStorage();
       setUser(next.user);
@@ -101,7 +117,12 @@ export function SapAiProvider({ children }: { children: ReactNode }) {
               headers: { Authorization: `Bearer ${next.token}` },
             });
             const payload = await res.json();
-            if (!res.ok || !payload?.success || !payload.data) return;
+            if (!res.ok || !payload?.success || !payload.data) {
+              if (res.status === 401 && isAuthSessionInvalidPayload(payload)) {
+                notifyAuthSessionExpired();
+              }
+              return;
+            }
             const merged = parseAuthUserPayload(payload.data);
             if (!merged) return;
             setUser(merged);
@@ -129,10 +150,11 @@ export function SapAiProvider({ children }: { children: ReactNode }) {
     window.addEventListener("storage", onAuth);
     window.addEventListener(evt, onAuth);
     return () => {
+      window.removeEventListener(expiredEvt, onExpired);
       window.removeEventListener("storage", onAuth);
       window.removeEventListener(evt, onAuth);
     };
-  }, [refreshAppConfig]);
+  }, [refreshAppConfig, router]);
 
   const logout = useCallback(async () => {
     await fetch(joinServerApiPath("/api/v1/auth/logout"), { method: "POST" }).catch(() => undefined);
