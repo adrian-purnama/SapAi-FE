@@ -230,7 +230,7 @@ export default function AdminPlanForm({
           </h4>
           <p className={styles.sectionHint}>
             Rate limit applies per API key. Use 0 for unlimited. Message length is enforced on chat
-            requests.
+            requests. In-flight jobs count pending, queued, and running per user.
           </p>
           <div className={styles.fieldGrid}>
             <NumField
@@ -246,6 +246,13 @@ export default function AdminPlanForm({
               min={1}
               max={1_000_000}
               onChange={(n) => patch("maxCharacterPerMessage", n)}
+            />
+            <NumField
+              label="Max in-flight chat jobs (per user)"
+              value={value.maxChatInFlight}
+              min={0}
+              max={10_000}
+              onChange={(n) => patch("maxChatInFlight", n)}
             />
             <NumField
               label="Max API keys"

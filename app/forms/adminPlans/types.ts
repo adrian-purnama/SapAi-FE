@@ -9,6 +9,7 @@ export type AdminPlan = {
   isPriority: boolean;
   rateLimitPerMinute: number;
   maxCharacterPerMessage: number;
+  maxChatInFlight: number;
   maxApiKeys: number;
   maxPdfUpload: number;
   maxPdfMb: number;
@@ -32,6 +33,7 @@ export type AdminPlanInput = {
   isPriority: boolean;
   rateLimitPerMinute: number;
   maxCharacterPerMessage: number;
+  maxChatInFlight: number;
   maxApiKeys: number;
   maxPdfUpload: number;
   maxPdfMb: number;
@@ -53,6 +55,7 @@ export const EMPTY_PLAN_INPUT: AdminPlanInput = {
   isPriority: false,
   rateLimitPerMinute: 10,
   maxCharacterPerMessage: 2000,
+  maxChatInFlight: 5,
   maxApiKeys: 1,
   maxPdfUpload: 1,
   maxPdfMb: 1,
@@ -75,6 +78,7 @@ export function planToInput(plan: AdminPlan): AdminPlanInput {
     isPriority: plan.isPriority,
     rateLimitPerMinute: plan.rateLimitPerMinute,
     maxCharacterPerMessage: plan.maxCharacterPerMessage,
+    maxChatInFlight: plan.maxChatInFlight,
     maxApiKeys: plan.maxApiKeys,
     maxPdfUpload: plan.maxPdfUpload,
     maxPdfMb: plan.maxPdfMb,
@@ -98,6 +102,7 @@ export function inputToCreateBody(input: AdminPlanInput) {
     isPriority: input.isPriority,
     rateLimitPerMinute: input.rateLimitPerMinute,
     maxCharacterPerMessage: input.maxCharacterPerMessage,
+    maxChatInFlight: input.maxChatInFlight,
     maxApiKeys: input.maxApiKeys,
     maxPdfUpload: input.maxPdfUpload,
     maxPdfMb: input.maxPdfMb,

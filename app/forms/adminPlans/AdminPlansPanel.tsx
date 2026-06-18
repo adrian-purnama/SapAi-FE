@@ -12,6 +12,10 @@ function formatRateLimit(n: number) {
   return n === 0 ? "∞ req/min" : `${n} req/min`;
 }
 
+function formatInFlightLimit(n: number) {
+  return n === 0 ? "∞ in-flight" : `${n} in-flight`;
+}
+
 function PlanCard({
   plan,
   selected,
@@ -54,6 +58,7 @@ function PlanCard({
 
       <div className={styles.statRow}>
         <span className={styles.statChip}>{formatRateLimit(plan.rateLimitPerMinute)}</span>
+        <span className={styles.statChip}>{formatInFlightLimit(plan.maxChatInFlight)}</span>
         <span className={styles.statChip}>{plan.maxCharacterPerMessage.toLocaleString()} chars</span>
         <span className={styles.statChip}>{plan.maxApiKeys} keys</span>
         <span className={styles.statChip}>
