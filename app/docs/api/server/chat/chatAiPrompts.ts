@@ -79,9 +79,45 @@ Translated text is in result.text.
 
 Write code for this flow with polling and error handling.`;
 
+export const OCR_AI_PROMPT = `Help me integrate the SapAi standalone API for OCR (image text/formula/table recognition).
+
+API overview:
+- Base URL: configure in SapAi docs API settings
+- Auth: x-api-key header
+- No model field — server uses glm-ocr:bf16 via task label "ocr"
+- Image must be base64 (raw or data:image/...;base64,... prefix — server strips prefix)
+
+Step 1 — enqueue OCR job
+POST /api/v1/chat
+Body example:
+{
+  "taskType": "ocr",
+  "imageBase64": "<base64-string>",
+  "mode": "text",
+  "maxTokens": 2048
+}
+mode: "text" | "formula" | "table" (default text)
+
+Browser encoding example:
+const b64 = await new Promise((res, rej) => {
+  const r = new FileReader();
+  r.onload = () => res(String(r.result).replace(/^data:image\\/[^;]+;base64,/, ""));
+  r.onerror = rej;
+  r.readAsDataURL(file);
+});
+
+Response includes job.id
+
+Step 2 — poll for result
+GET /api/v1/chat/jobs/{job.id}
+Poll until status is completed_partial or completed_full.
+OCR output is in result.text.
+
+Write code with file upload support, polling, and error handling.`;
+
 export const CHECK_JOB_AI_PROMPT = `Help me check SapAi chat job status after POST /api/v1/chat.
 
-I already have a job id from a chat, rag, or translate enqueue response.
+I already have a job id from a chat, rag, translate, or OCR enqueue response.
 
 Poll (HTTP):
 GET /api/v1/chat/jobs/{JOB_ID}

@@ -6,6 +6,13 @@ import { MethodBadge } from "@/app/docs/components/docsMethodBadge";
 
 export type ApiDocExample = { title: string; body: string };
 
+export type ApiParamRow = {
+  name: string;
+  type: string;
+  required?: boolean;
+  description: ReactNode;
+};
+
 type Props = {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   path: string;
@@ -15,6 +22,8 @@ type Props = {
   /** e.g. "Public", "API key", "Embed token" */
   authLabel?: string;
   description: ReactNode;
+  /** Request body / query field reference (shown before Try it). */
+  parameters?: ApiParamRow[];
   /** Interactive panel   configure fields, Run request, live response. */
   tryIt: ReactNode;
   exampleRequests?: ApiDocExample[];
@@ -32,6 +41,40 @@ function AuthPill({ label }: { label: string }) {
   );
 }
 
+function ParamsTable({ rows }: { rows: ApiParamRow[] }) {
+  return (
+    <div className="overflow-x-auto rounded-lg border border-zinc-200">
+      <table className="min-w-full divide-y divide-zinc-200 text-sm">
+        <thead className="bg-zinc-50">
+          <tr>
+            <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Field
+            </th>
+            <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Type
+            </th>
+            <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Description
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-zinc-100 bg-white">
+          {rows.map((row) => (
+            <tr key={row.name}>
+              <td className="px-4 py-2.5 align-top font-mono text-xs text-zinc-900">
+                {row.name}
+                {row.required ? <span className="ml-0.5 text-red-600">*</span> : null}
+              </td>
+              <td className="px-4 py-2.5 align-top font-mono text-xs text-zinc-500">{row.type}</td>
+              <td className="px-4 py-2.5 align-top leading-relaxed text-zinc-600">{row.description}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function ApiEndpointSection({
   method,
   path,
@@ -39,6 +82,7 @@ export function ApiEndpointSection({
   sectionId,
   authLabel,
   description,
+  parameters,
   tryIt,
   exampleRequests = [],
   exampleResponses = [],
@@ -60,6 +104,12 @@ export function ApiEndpointSection({
         </div>
         <div className="mt-4 text-base leading-relaxed text-zinc-600">{description}</div>
       </header>
+
+      {parameters && parameters.length > 0 ? (
+        <DocsSubsection variant="secondary" title="Request body">
+          <ParamsTable rows={parameters} />
+        </DocsSubsection>
+      ) : null}
 
       <DocsSubsection variant="primary" title="Try it">
         {tryIt}

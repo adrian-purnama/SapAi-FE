@@ -11,6 +11,7 @@ export type UserPlan = {
   maxCharacterPerMessage: number;
   maxPdfUpload: number;
   maxPdfMb: number;
+  maxOcrMb: number;
 };
 
 export type AuthUser = {
@@ -48,6 +49,7 @@ export function parseUserPlan(raw: unknown): UserPlan | null {
     maxPdfUpload:
       typeof o.maxPdfUpload === "number" && Number.isFinite(o.maxPdfUpload) ? o.maxPdfUpload : 5,
     maxPdfMb: typeof o.maxPdfMb === "number" && Number.isFinite(o.maxPdfMb) ? o.maxPdfMb : 15,
+    maxOcrMb: typeof o.maxOcrMb === "number" && Number.isFinite(o.maxOcrMb) ? o.maxOcrMb : 10,
   };
 }
 

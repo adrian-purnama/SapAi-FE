@@ -47,7 +47,7 @@ export const CHAT_JOB_STATUSES = [
   "cancelled",
 ] as const;
 
-export const CHAT_TASK_TYPES = ["chat", "rag", "translate"] as const;
+export const CHAT_TASK_TYPES = ["chat", "rag", "translate", "ocr"] as const;
 
 export const EMPTY_CHAT_JOB_FILTERS: AdminChatJobFilters = {
   taskType: "",

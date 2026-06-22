@@ -12,8 +12,10 @@ import { SNIPPET_LANGUAGES } from "@/app/docs/lib/snippets/generators";
 
 import {
   MESSAGE_ROLES,
+  OCR_MODES,
   TASK_TYPES,
   type MessageRole,
+  type OcrMode,
   type TaskType,
 } from "@/app/docs/constants/standaloneApiDocs";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
@@ -27,8 +29,12 @@ const btnSecondaryClass =
 
 function extractJobIdFromResponse(text: string): string | null {
   try {
-    const json = JSON.parse(text) as { job?: { id?: unknown }; id?: unknown };
-    const id = json.job?.id ?? json.id;
+    const json = JSON.parse(text) as {
+      job?: { id?: unknown };
+      id?: unknown;
+      data?: { job?: { id?: unknown }; id?: unknown };
+    };
+    const id = json.data?.job?.id ?? json.data?.id ?? json.job?.id ?? json.id;
     return typeof id === "string" && id.trim().length > 0 ? id.trim() : null;
   } catch {
     return null;
@@ -289,7 +295,7 @@ function JobPollExamples({
           → <span className="text-zinc-700">{resolvedPath}</span>
         </p>
         <p className="mt-2 text-xs text-zinc-500">
-          Auto-filled when you Run a chat, RAG, or translate job above. Edit manually if needed.
+          Auto-filled when you run a chat, RAG, translate, or OCR job above. Edit manually if needed.
         </p>
       </div>
 
@@ -305,6 +311,120 @@ function JobPollExamples({
 }
 
 type TemplateBuilderRow = { id: string; propertyKey: string; placeholder: string };
+
+function stripDataUrlBase64(value: string): string {
+  return value.replace(/^data:image\/[^;]+;base64,/, "").trim();
+}
+
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(stripDataUrlBase64(String(reader.result ?? "")));
+    reader.onerror = () => reject(reader.error ?? new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function OcrImageField({
+  imageBase64,
+  imageLabel,
+  onImageChange,
+}: {
+  imageBase64: string;
+  imageLabel: string;
+  onImageChange: (base64: string, label: string) => void;
+}) {
+  const [dragOver, setDragOver] = useState(false);
+  const [pasteValue, setPasteValue] = useState("");
+
+  const loadFile = async (file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    const b64 = await fileToBase64(file);
+    const label = `${file.name} (${Math.max(1, Math.round(file.size / 1024))} KB)`;
+    onImageChange(b64, label);
+    setPasteValue("");
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) void loadFile(file).catch(() => undefined);
+  };
+
+  return (
+    <div className="mt-4 space-y-3">
+      <p className="text-sm font-medium text-zinc-700">imageBase64</p>
+      <div
+        role="button"
+        tabIndex={0}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={onDrop}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            document.getElementById("ocr-docs-file-input")?.click();
+          }
+        }}
+        className={[
+          "flex flex-col items-center justify-center rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors",
+          dragOver ? "border-sky-400 bg-sky-50" : "border-zinc-300 bg-zinc-50/80 hover:border-zinc-400",
+        ].join(" ")}
+      >
+        <p className="text-sm text-zinc-700">Drag and drop an image here</p>
+        <p className="mt-1 text-xs text-zinc-500">PNG, JPEG, WebP, GIF</p>
+        <label className="mt-3">
+          <span className={`${btnSecondaryClass} cursor-pointer`}>Choose file</span>
+          <input
+            id="ocr-docs-file-input"
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void loadFile(file).catch(() => undefined);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      </div>
+
+      {imageBase64 ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          <span>Ready: {imageLabel || `${imageBase64.length.toLocaleString()} base64 chars`}</span>
+          <button
+            type="button"
+            className="text-xs font-medium text-emerald-800 underline underline-offset-2"
+            onClick={() => onImageChange("", "")}
+          >
+            Clear
+          </button>
+        </div>
+      ) : null}
+
+      <label className="block text-sm">
+        <span className="font-medium text-zinc-700">Or paste base64 / data URL</span>
+        <textarea
+          value={pasteValue}
+          onChange={(e) => {
+            const v = e.target.value;
+            setPasteValue(v);
+            const stripped = stripDataUrlBase64(v);
+            if (stripped) onImageChange(stripped, "Pasted base64");
+          }}
+          rows={3}
+          spellCheck={false}
+          placeholder="iVBORw0KGgo... or data:image/png;base64,..."
+          className={fieldClass}
+        />
+      </label>
+    </div>
+  );
+}
 
 function ChatJobExamples({
   target,
@@ -329,6 +449,9 @@ function ChatJobExamples({
   const [targetLang, setTargetLang] = useState("Indonesian");
   const [targetCode, setTargetCode] = useState("id");
   const [translateText, setTranslateText] = useState("Hello, how are you?");
+  const [ocrMode, setOcrMode] = useState<OcrMode>("text");
+  const [ocrImageBase64, setOcrImageBase64] = useState("");
+  const [ocrImageLabel, setOcrImageLabel] = useState("");
   const [maxTokens, setMaxTokens] = useState("500");
   const [outputJsonTemplate, setOutputJsonTemplate] = useState("");
   const [taskTypeOptions, setTaskTypeOptions] = useState<string[]>(() => [...TASK_TYPES]);
@@ -340,6 +463,8 @@ function ChatJobExamples({
 
   const effectiveTaskType = fixedTaskType ?? taskType;
   const isTranslate = effectiveTaskType === "translate";
+  const isOcr = effectiveTaskType === "ocr";
+  const isChatOrRag = effectiveTaskType === "chat" || effectiveTaskType === "rag";
 
   useEffect(() => {
     if (fixedTaskType) setTaskType(fixedTaskType);
@@ -361,6 +486,15 @@ function ChatJobExamples({
       };
     }
 
+    if (isOcr) {
+      return {
+        taskType: "ocr",
+        imageBase64: ocrImageBase64.trim(),
+        mode: ocrMode,
+        maxTokens: max,
+      };
+    }
+
     const text = content.trim() || "Hello";
     const effectiveModel = model || modelOptions[0] || "";
     const base: Record<string, unknown> = {
@@ -377,6 +511,9 @@ function ChatJobExamples({
   }, [
     effectiveTaskType,
     isTranslate,
+    isOcr,
+    ocrMode,
+    ocrImageBase64,
     modelOptions,
     role,
     content,
@@ -476,7 +613,7 @@ function ChatJobExamples({
             />
           ) : null}
 
-          {!isTranslate ? (
+          {!isTranslate && !isOcr ? (
             <SearchableSelect
               ui="square"
               label="model"
@@ -486,7 +623,7 @@ function ChatJobExamples({
             />
           ) : null}
 
-          {!isTranslate ? (
+          {isChatOrRag ? (
             <label className="block text-sm">
               <span className="font-medium text-zinc-700">input[0].role</span>
               <select
@@ -565,6 +702,28 @@ function ChatJobExamples({
               />
             </label>
           </div>
+        ) : isOcr ? (
+          <div className="mt-4">
+            <SearchableSelect
+              ui="square"
+              label="mode"
+              value={ocrMode}
+              onChange={(v) => setOcrMode(v as OcrMode)}
+              options={OCR_MODES.map((m) => ({
+                value: m,
+                label:
+                  m === "text" ? "text — Text Recognition" : m === "formula" ? "formula — Formula Recognition" : "table — Table Recognition",
+              }))}
+            />
+            <OcrImageField
+              imageBase64={ocrImageBase64}
+              imageLabel={ocrImageLabel}
+              onImageChange={(b64, label) => {
+                setOcrImageBase64(b64);
+                setOcrImageLabel(label);
+              }}
+            />
+          </div>
         ) : (
           <label className="mt-4 block text-sm">
             <span className="font-medium text-zinc-700">input[0].content</span>
@@ -578,7 +737,7 @@ function ChatJobExamples({
           </label>
         )}
 
-        {!isTranslate && effectiveTaskType === "chat" ? (
+        {!isTranslate && !isOcr && effectiveTaskType === "chat" ? (
           <details className="mt-6 border-t border-zinc-200 pt-4">
             <summary className="cursor-pointer select-none text-sm font-medium text-zinc-700 marker:text-zinc-400 hover:text-zinc-900">
               Output JSON template (optional)

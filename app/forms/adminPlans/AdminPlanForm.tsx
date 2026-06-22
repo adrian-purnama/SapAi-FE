@@ -336,6 +336,13 @@ export default function AdminPlanForm({
               onChange={(n) => patch("maxPdfMb", n)}
             />
             <NumField
+              label="Max OCR image (MB)"
+              value={value.maxOcrMb}
+              min={1}
+              max={512}
+              onChange={(n) => patch("maxOcrMb", n)}
+            />
+            <NumField
               label="Analytics history (days)"
               value={value.analyticsRetentionDays}
               min={0}

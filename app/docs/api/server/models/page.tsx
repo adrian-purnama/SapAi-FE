@@ -55,11 +55,12 @@ export default function ServerModelsDocsPage() {
             body: `{
   "success": true,
   "data": {
-    "taskTypes": ["chat", "rag", "translate"],
+    "taskTypes": ["chat", "rag", "translate", "ocr"],
     "modelsByTask": {
       "chat": ["<modelLabel>"],
       "rag": ["<modelLabel>"],
-      "translate": ["TRANSLATE"]
+      "translate": ["TRANSLATE"],
+      "ocr": ["ocr"]
     }
   },
   "error": null

@@ -64,6 +64,7 @@ function PlanCard({
         <span className={styles.statChip}>
           {plan.maxPdfUpload} PDF · {plan.maxPdfMb} MB
         </span>
+        <span className={styles.statChip}>OCR {plan.maxOcrMb} MB</span>
       </div>
 
       <div className={styles.badgeRow}>

@@ -13,6 +13,7 @@ export type AdminPlan = {
   maxApiKeys: number;
   maxPdfUpload: number;
   maxPdfMb: number;
+  maxOcrMb: number;
   analyticsRetentionDays: number;
   isAutoEmbed: boolean;
   embedBadgeCustomizable: boolean;
@@ -44,6 +45,7 @@ export type AdminPlanInput = {
   maxApiKeys: number;
   maxPdfUpload: number;
   maxPdfMb: number;
+  maxOcrMb: number;
   analyticsRetentionDays: number;
   isAutoEmbed: boolean;
   embedBadgeCustomizable: boolean;
@@ -71,6 +73,7 @@ export const EMPTY_PLAN_INPUT: AdminPlanInput = {
   maxApiKeys: 1,
   maxPdfUpload: 1,
   maxPdfMb: 1,
+  maxOcrMb: 10,
   analyticsRetentionDays: 1,
   isAutoEmbed: false,
   embedBadgeCustomizable: false,
@@ -95,6 +98,7 @@ export function planToInput(plan: AdminPlan): AdminPlanInput {
     maxApiKeys: plan.maxApiKeys,
     maxPdfUpload: plan.maxPdfUpload,
     maxPdfMb: plan.maxPdfMb,
+    maxOcrMb: plan.maxOcrMb,
     analyticsRetentionDays: plan.analyticsRetentionDays,
     isAutoEmbed: plan.isAutoEmbed,
     embedBadgeCustomizable: plan.embedBadgeCustomizable,
@@ -120,6 +124,7 @@ export function inputToCreateBody(input: AdminPlanInput) {
     maxApiKeys: input.maxApiKeys,
     maxPdfUpload: input.maxPdfUpload,
     maxPdfMb: input.maxPdfMb,
+    maxOcrMb: input.maxOcrMb,
     analyticsRetentionDays: input.analyticsRetentionDays,
     isAutoEmbed: input.isAutoEmbed,
     embedBadgeCustomizable: input.embedBadgeCustomizable,
