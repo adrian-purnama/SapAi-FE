@@ -30,9 +30,13 @@ export async function middleware(request: NextRequest) {
         cache: "no-store",
       });
       if (res.ok) {
-        const j = (await res.json()) as { frameAncestors?: unknown };
-        if (Array.isArray(j.frameAncestors) && j.frameAncestors.length > 0) {
-          const parts = j.frameAncestors.filter((x): x is string => typeof x === "string" && x.trim().length > 0);
+        const j = (await res.json()) as {
+          success?: boolean;
+          data?: { frameAncestors?: unknown };
+        };
+        const raw = j.success === true ? j.data?.frameAncestors : undefined;
+        if (Array.isArray(raw) && raw.length > 0) {
+          const parts = raw.filter((x): x is string => typeof x === "string" && x.trim().length > 0);
           if (parts.length > 0) {
             csp = `frame-ancestors ${parts.join(" ")}`;
           }
