@@ -57,7 +57,7 @@ function truncateId(id: string): string {
 }
 
 function previewText(text: string | null | undefined, max = 72): string {
-  if (!text) return "—";
+  if (!text) return " ";
   const t = text.replace(/\s+/g, " ").trim();
   if (t.length <= max) return t;
   return `${t.slice(0, max)}…`;
@@ -80,7 +80,7 @@ function LockedClassificationPricingLink({ columnLabel }: { columnLabel: string 
     <Link
       href="/pricing"
       className="inline-flex size-8 items-center justify-center rounded-lg border border-black bg-black text-white hover:bg-zinc-900 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black"
-      title={`${columnLabel} requires a plan with RAG analytics — view pricing`}
+      title={`${columnLabel} requires a plan with RAG analytics   view pricing`}
       aria-label={`${columnLabel}: upgrade your plan to unlock (opens pricing)`}
     >
       <Lock className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
@@ -88,7 +88,7 @@ function LockedClassificationPricingLink({ columnLabel }: { columnLabel: string 
   );
 }
 
-/** Shown in Answ./Intent/Category when `taskType` is not RAG — chat jobs are never FAQ-classified. */
+/** Shown in Answ./Intent/Category when `taskType` is not RAG   chat jobs are never FAQ-classified. */
 function ChatNoClassificationMark() {
   return (
     <span
@@ -384,7 +384,7 @@ export default function ProjectDetailPage() {
       }
       const apiKey = String(payload?.data?.apiKey ?? "");
       if (apiKey) setRevealedKey(apiKey);
-      toastSuccess("API key rotated. Copy the new secret — the old key no longer works.", { id: "project-detail-ops" });
+      toastSuccess("API key rotated. Copy the new secret   the old key no longer works.", { id: "project-detail-ops" });
       await loadMeta();
       await loadJobs();
     } catch (e) {
@@ -500,7 +500,7 @@ export default function ProjectDetailPage() {
                   className="mt-1.5 truncate text-[11px] leading-snug text-zinc-600"
                   title={
                     [
-                      summary.lastJobAt ? new Date(summary.lastJobAt).toLocaleString() : "—",
+                      summary.lastJobAt ? new Date(summary.lastJobAt).toLocaleString() : " ",
                       summary.lastJobId ? `Job ${summary.lastJobId}` : "",
                       summary.cancelled > 0 ? `${summary.cancelled} cancelled` : "",
                     ]
@@ -509,7 +509,7 @@ export default function ProjectDetailPage() {
                   }
                 >
                   <span className="font-medium text-zinc-700">Last:</span>{" "}
-                  {summary.lastJobAt ? new Date(summary.lastJobAt).toLocaleString() : "—"}
+                  {summary.lastJobAt ? new Date(summary.lastJobAt).toLocaleString() : " "}
                   {summary.lastJobId ? (
                     <>
                       {" "}
@@ -549,7 +549,7 @@ export default function ProjectDetailPage() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-lg font-semibold text-zinc-900">New API key</h3>
-                <p className="mt-1 text-sm text-zinc-600">Copy it now — the old key no longer works.</p>
+                <p className="mt-1 text-sm text-zinc-600">Copy it now   the old key no longer works.</p>
               </div>
               <button
                 type="button"
@@ -709,7 +709,7 @@ export default function ProjectDetailPage() {
                       label="Created (UTC)"
                       description={
                         historyTodayOnly
-                          ? `${userPlan?.name ?? "Your plan"}: only today (UTC) — dates are fixed.`
+                          ? `${userPlan?.name ?? "Your plan"}: only today (UTC)   dates are fixed.`
                           : `${userPlan?.name ?? "Your plan"}: pick any range within the last ${analyticsRetentionDays} day(s) (UTC).`
                       }
                       from={filterFrom}
@@ -1008,7 +1008,7 @@ export default function ProjectDetailPage() {
                               ) : job.taskType !== "rag" ? (
                                 <ChatNoClassificationMark />
                               ) : (
-                                <span className="font-mono text-xs text-zinc-700">{job.ragAnalysis?.answerable ?? "—"}</span>
+                                <span className="font-mono text-xs text-zinc-700">{job.ragAnalysis?.answerable ?? " "}</span>
                               )}
                             </td>
                             <td className="max-w-[100px] truncate px-3 py-2 text-center">
@@ -1018,7 +1018,7 @@ export default function ProjectDetailPage() {
                                 <ChatNoClassificationMark />
                               ) : (
                                 <span className="font-mono text-xs text-zinc-700" title={job.ragAnalysis?.intent ?? ""}>
-                                  {job.ragAnalysis?.intent ?? "—"}
+                                  {job.ragAnalysis?.intent ?? " "}
                                 </span>
                               )}
                             </td>
@@ -1029,7 +1029,7 @@ export default function ProjectDetailPage() {
                                 <ChatNoClassificationMark />
                               ) : (
                                 <span className="text-xs text-zinc-600" title={job.ragAnalysis?.category ?? ""}>
-                                  {job.ragAnalysis?.category ? previewText(job.ragAnalysis.category, 48) : "—"}
+                                  {job.ragAnalysis?.category ? previewText(job.ragAnalysis.category, 48) : " "}
                                 </span>
                               )}
                             </td>
@@ -1037,10 +1037,10 @@ export default function ProjectDetailPage() {
                               {previewText(job.result?.text)}
                             </td>
                             <td className="px-3 py-2 tabular-nums">
-                              {job.result?.totalTokens != null ? job.result.totalTokens.toLocaleString() : "—"}
+                              {job.result?.totalTokens != null ? job.result.totalTokens.toLocaleString() : " "}
                             </td>
                             <td className="px-3 py-2 text-xs text-zinc-600">
-                              {job.createdAt ? new Date(job.createdAt).toLocaleString() : "—"}
+                              {job.createdAt ? new Date(job.createdAt).toLocaleString() : " "}
                             </td>
                           </tr>
                         ))}

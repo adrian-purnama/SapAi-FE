@@ -327,7 +327,7 @@ export function FaqRagEmbedSettingsCard({ apiKeyId, disabled = false, faqLoad }:
             <code className="rounded bg-zinc-100 px-1 font-mono text-[11px] text-zinc-800">
               x-embed-token
             </code>
-            ) — that is expected for a public embed. It is <span className="font-medium">not</span> your{" "}
+            )   that is expected for a public embed. It is <span className="font-medium">not</span> your{" "}
             <code className="font-mono text-[11px]">sapai_sk_</code> server key. You can copy the token anytime from this
             page while signed in; rotate to revoke old links.
           </p>

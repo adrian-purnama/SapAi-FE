@@ -30,7 +30,7 @@ type Tier = {
 const BENEFITS: Array<{ title: string; body: string; icon: React.ComponentType<{ className?: string }> }> = [
   {
     title: "RAG that stays fast",
-    body: "Upload Markdown knowledge, we handle chunking and vector search — storage included on every plan.",
+    body: "Upload Markdown knowledge, we handle chunking and vector search   storage included on every plan.",
     icon: Layers,
   },
   {
@@ -51,7 +51,7 @@ const TIERS: Tier[] = [
     name: "Free",
     price: "0",
     priceNote: "forever",
-    tagline: "Prove the API and FAQ RAG on one project — upgrade when you need embed or analytics.",
+    tagline: "Prove the API and FAQ RAG on one project   upgrade when you need embed or analytics.",
     bullets: [
       "1 API key",
       "Chat + RAG via API · unlimited queue",
@@ -79,7 +79,7 @@ const TIERS: Tier[] = [
       "3,000 characters per message",
       "5 Markdown (.md) files per project · 10 MB each",
       "Vector search storage included",
-      "Usage & RAG insights — 3 months",
+      "Usage & RAG insights   3 months",
       "Public embed widget (iframe) on your site",
       "Fixed “Provided by SapAi” badge on embed",
     ],
@@ -101,7 +101,7 @@ const TIERS: Tier[] = [
       "10,000 characters per message",
       "10 Markdown (.md) files per project · 15 MB each",
       "Vector search storage included",
-      "Usage & RAG insights — 12 months",
+      "Usage & RAG insights   12 months",
       "Public embed widget (iframe) on your site",
       "Custom embed badge & AI disclaimer",
     ],
@@ -113,7 +113,7 @@ const TIERS: Tier[] = [
 ];
 
 function ComparePlanCell({ value }: { value: string }) {
-  if (value === "—") {
+  if (value === " ") {
     return (
       <span className="inline-flex text-zinc-400" title="Not included" aria-label="Not included">
         <X className="h-4 w-4" strokeWidth={2.25} aria-hidden />
@@ -261,7 +261,7 @@ export default function PricingPage() {
                 ["API keys (total)", "1", "3", "10"],
                 ["Chat + RAG via API", "Included", "Included", "Included"],
                 ["Queue", "Unlimited", "Unlimited", "Unlimited"],
-                ["Priority processing", "—", "Yes", "Yes"],
+                ["Priority processing", " ", "Yes", "Yes"],
                 ["API requests / minute (per key)", "10", "120", "200"],
                 ["Max characters per message", "700", "3,000", "10,000"],
                 ["Knowledge files / project", "1", "5", "10"],
@@ -269,8 +269,8 @@ export default function PricingPage() {
                 ["Max file size", "1 MB", "10 MB", "15 MB"],
                 ["Vector search storage", "Included", "Included", "Included"],
                 ["Usage & RAG insights", "1 day", "3 months", "12 months"],
-                ["Public embed widget", "—", "Included", "Included"],
-                ["Embed badge & disclaimer", "—", "Fixed SapAi badge", "Fully customizable"],
+                ["Public embed widget", " ", "Included", "Included"],
+                ["Embed badge & disclaimer", " ", "Fixed SapAi badge", "Fully customizable"],
               ].map(([k, a, b, c]) => (
                 <tr key={k}>
                   <td className="px-6 py-3 font-medium text-zinc-900">{k}</td>

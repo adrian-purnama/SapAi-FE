@@ -125,7 +125,7 @@ export function FaqProjectCategoriesForm({ apiKeyId, faqLoad, disabled = false, 
             FAQ categories
           </h2>
           <p className={styles.hint}>
-            Add short labels (e.g. <code className="rounded bg-zinc-100 px-1 text-[11px]">shipping</code>) — they help
+            Add short labels (e.g. <code className="rounded bg-zinc-100 px-1 text-[11px]">shipping</code>)   they help
             classify RAG answers for this project. Press{" "}
             <kbd className="rounded border border-zinc-200 bg-white px-1 font-mono text-[10px]">Enter</kbd> or use Add.
             Max {FAQ_PROJECT_MAX_CATEGORIES} labels, {FAQ_PROJECT_MAX_CATEGORY_LEN} characters each.

@@ -149,7 +149,7 @@ export default function Navbar() {
   const logoUrl = appConfig?.brandLogoUrl;
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  /* Light chrome everywhere — landing matches interior for cohesion */
+  /* Light chrome everywhere   landing matches interior for cohesion */
   const shell =
     "sticky top-0 z-50 border-b border-zinc-200/90 bg-white/95 backdrop-blur-md shadow-[0_1px_0_0_rgba(0,0,0,0.05)]";
 

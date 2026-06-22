@@ -71,7 +71,7 @@ export function faqProcessingStatusLabel(status: FaqProcessingStatus): string {
 }
 
 export function formatFaqFileSize(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes < 0) return "—";
+  if (!Number.isFinite(bytes) || bytes < 0) return " ";
   if (bytes < 1024) return `${bytes} B`;
   const kb = bytes / 1024;
   if (kb < 1024) return `${kb < 10 ? kb.toFixed(1) : Math.round(kb)} KB`;

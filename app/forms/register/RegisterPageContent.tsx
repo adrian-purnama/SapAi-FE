@@ -56,7 +56,7 @@ export default function RegisterPageContent() {
             </div>
           ) : null}
           <h1 className="text-xl font-semibold">
-            {appConfig.appName ? `${appConfig.appName} — ` : null}
+            {appConfig.appName ? `${appConfig.appName}   ` : null}
             Registration unavailable
           </h1>
           <p className="mt-2 text-zinc-600">New accounts are currently disabled by the administrator.</p>

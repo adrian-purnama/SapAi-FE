@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Ban, KeyRound, Mail, RefreshCw, Send, Shield } from "lucide-react";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { useAdminPlans } from "@/app/forms/adminPlans/useAdminPlans";
@@ -25,6 +25,13 @@ function statCard(label: string, value: string, hint?: string) {
   );
 }
 
+function toDateInputValue(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
+
 export default function AdminUserDetailsPanel({ userId }: { userId: string }) {
   const { user, loading, error, refetch, hasAuth } = useAdminUser(userId);
   const { patchUser, sendPasswordReset, setPassword } = useAdminUsers();
@@ -35,19 +42,54 @@ export default function AdminUserDetailsPanel({ userId }: { userId: string }) {
   const [pw, setPw] = useState("");
   const [pwSaving, setPwSaving] = useState(false);
 
+  const [selectedPlanId, setSelectedPlanId] = useState("");
+  const [expiryMode, setExpiryMode] = useState<"never" | "date">("never");
+  const [expiryDate, setExpiryDate] = useState("");
+
+  const defaultPlan = useMemo(() => plans.find((p) => p.isDefault), [plans]);
+  const selectedPlan = useMemo(
+    () => plans.find((p) => p.id === selectedPlanId),
+    [plans, selectedPlanId],
+  );
+  const isNonDefaultPlan = Boolean(selectedPlan && !selectedPlan.isDefault);
+
   const planOptions = useMemo(
     () =>
       plans.map((p) => ({
         value: p.id,
-        label: `${p.name} (${p.slug})`,
+        label: `${p.name} (${p.slug})${p.isDefault ? " — default" : ""}`,
       })),
     [plans],
   );
 
-  async function onPlanChange(planId: string) {
+  useEffect(() => {
+    if (!user) return;
+    setSelectedPlanId(user.plan?.id ?? "");
+    if (user.planExpiresAt) {
+      setExpiryMode("date");
+      setExpiryDate(toDateInputValue(user.planExpiresAt));
+    } else {
+      setExpiryMode("never");
+      setExpiryDate("");
+    }
+  }, [user]);
+
+  async function onSavePlan() {
+    if (!selectedPlanId && !defaultPlan) {
+      toastError("No default plan configured.", { id: "admin-user-action" });
+      return;
+    }
+    if (isNonDefaultPlan && expiryMode === "date" && !expiryDate.trim()) {
+      toastError("Pick an expiry date or choose Never expires.", { id: "admin-user-action" });
+      return;
+    }
+
     setSaving(true);
     try {
-      await patchUser(userId, { planId: planId || null });
+      await patchUser(userId, {
+        planId: selectedPlanId || null,
+        planExpiresAt: isNonDefaultPlan ? (expiryMode === "never" ? null : expiryDate) : null,
+      });
       toastSuccess("Plan updated.", { id: "admin-user-action" });
       await refetch();
     } catch (e) {
@@ -132,6 +174,14 @@ export default function AdminUserDetailsPanel({ userId }: { userId: string }) {
 
   const u: AdminUserRow = user;
   const planLabel = u.plan ? `${u.plan.name} (${u.plan.slug})` : "No plan assigned";
+  const expiryLabel = u.planExpiresAt
+    ? new Date(u.planExpiresAt).toLocaleDateString()
+    : u.plan && !u.isPlanExpired
+      ? "Never"
+      : "—";
+  const effectiveLabel = u.isPlanExpired && u.effectivePlan
+    ? `${u.effectivePlan.name} (expired)`
+    : planLabel;
 
   return (
     <div className="mt-6 space-y-6">
@@ -175,21 +225,29 @@ export default function AdminUserDetailsPanel({ userId }: { userId: string }) {
         <div className="relative mt-4 flex flex-wrap items-center gap-2">
           <span className={badge(!u.isBlocked)}>{u.isBlocked ? "Blocked" : "Active"}</span>
           <span className={badge(u.isEmailVerified)}>{u.isEmailVerified ? "Verified" : "Unverified"}</span>
+          {u.isPlanExpired ? (
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+              Plan expired
+            </span>
+          ) : null}
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {statCard("Plan", planLabel)}
-        {statCard("Member since", u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "—")}
+        {statCard("Assigned plan", planLabel, u.isPlanExpired ? `Effective: ${effectiveLabel}` : undefined)}
+        {statCard("Plan expires", expiryLabel, u.isPlanExpired ? "Downgraded to default plan" : undefined)}
+        {statCard("Member since", u.createdAt ? new Date(u.createdAt).toLocaleDateString() : " ")}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
             <h3 className="text-sm font-semibold text-zinc-900">Plan & access</h3>
-            <p className="mt-1 text-xs text-zinc-600">Assign a subscription plan from Admin → Plans.</p>
+            <p className="mt-1 text-xs text-zinc-600">
+              Non-default plans require an expiry (never or a date). Default plan never expires.
+            </p>
 
-            <div className="mt-4 grid gap-4 md:grid-cols-2 md:items-end">
+            <div className="mt-4 space-y-4">
               <div className="max-w-md">
                 {plansLoading && planOptions.length === 0 ? (
                   <p className="text-sm text-zinc-600">Loading plans…</p>
@@ -205,14 +263,62 @@ export default function AdminUserDetailsPanel({ userId }: { userId: string }) {
                   <SearchableSelect
                     label="Plan"
                     ui="square"
-                    value={u.plan?.id ?? ""}
+                    value={selectedPlanId}
                     options={planOptions}
                     disabled={saving}
-                    onChange={onPlanChange}
+                    onChange={setSelectedPlanId}
                   />
                 )}
               </div>
+
+              {isNonDefaultPlan ? (
+                <fieldset className="space-y-3 rounded-xl border border-zinc-200 bg-zinc-50/50 p-4">
+                  <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                    Plan expiry
+                  </legend>
+                  <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-800">
+                    <input
+                      type="radio"
+                      name="expiryMode"
+                      checked={expiryMode === "never"}
+                      disabled={saving}
+                      onChange={() => setExpiryMode("never")}
+                      className="h-4 w-4 border-zinc-300 text-violet-600 focus:ring-violet-500"
+                    />
+                    Never expires
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-800">
+                    <input
+                      type="radio"
+                      name="expiryMode"
+                      checked={expiryMode === "date"}
+                      disabled={saving}
+                      onChange={() => setExpiryMode("date")}
+                      className="h-4 w-4 border-zinc-300 text-violet-600 focus:ring-violet-500"
+                    />
+                    Expires on
+                  </label>
+                  {expiryMode === "date" ? (
+                    <input
+                      type="date"
+                      value={expiryDate}
+                      disabled={saving}
+                      onChange={(e) => setExpiryDate(e.target.value)}
+                      className="h-10 rounded-xl border border-zinc-300 bg-white px-3 text-sm text-zinc-900 shadow-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-400"
+                    />
+                  ) : null}
+                </fieldset>
+              ) : null}
+
               <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={saving || planOptions.length === 0}
+                  onClick={() => void onSavePlan()}
+                  className="inline-flex h-10 items-center justify-center rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-70"
+                >
+                  Save plan
+                </button>
                 <button
                   type="button"
                   disabled={saving}

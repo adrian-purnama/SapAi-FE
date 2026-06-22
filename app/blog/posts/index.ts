@@ -3,7 +3,7 @@ import type { BlogPostMeta, BlogPostModule } from "@/app/blog/_lib/types";
 import WelcomeToSapAiContent, { meta as welcomeMeta } from "./welcome-to-sapai";
 import TestContent, { meta as testMeta } from "./test";
 
-/** Add new posts here — one import + one entry in ALL_POST_MODULES. */
+/** Add new posts here   one import + one entry in ALL_POST_MODULES. */
 const ALL_POST_MODULES: BlogPostModule[] = [
   { meta: welcomeMeta, Content: WelcomeToSapAiContent },
 

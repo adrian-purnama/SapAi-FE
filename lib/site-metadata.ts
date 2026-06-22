@@ -38,7 +38,7 @@ function getOpenGraphImageUrl(
 }
 
 function defaultSiteDescription(appName: string): string {
-  return `${appName} — AI chatbot platform with dashboard, docs, and API access.`;
+  return `${appName}   AI chatbot platform with dashboard, docs, and API access.`;
 }
 
 export async function buildRootSiteMetadata(): Promise<Metadata> {
@@ -51,7 +51,7 @@ export async function buildRootSiteMetadata(): Promise<Metadata> {
     metadataBase,
     title: {
       default: config.appName,
-      template: `%s — ${config.appName}`,
+      template: `%s   ${config.appName}`,
     },
     description,
     applicationName: config.appName,

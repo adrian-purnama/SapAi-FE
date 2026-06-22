@@ -2,12 +2,13 @@
 
 import type { FormEvent } from "react";
 
-import type { AdminPlanInput } from "./types";
+import type { AdminPlanInput, TaskCatalogEntry } from "./types";
 import styles from "./AdminPlanForm.module.css";
 
 type Props = {
   mode: "create" | "edit";
   value: AdminPlanInput;
+  catalog: TaskCatalogEntry[];
   onChange: (next: AdminPlanInput) => void;
   saving: boolean;
   onSubmit: () => Promise<void>;
@@ -73,6 +74,7 @@ function NumField({
 export default function AdminPlanForm({
   mode,
   value,
+  catalog,
   onChange,
   saving,
   onSubmit,
@@ -81,6 +83,24 @@ export default function AdminPlanForm({
 }: Props) {
   function patch<K extends keyof AdminPlanInput>(key: K, v: AdminPlanInput[K]) {
     onChange({ ...value, [key]: v });
+  }
+
+  function setTaskEnabled(taskType: string, enabled: boolean, availableModels: string[]) {
+    const next = { ...value.taskAccess };
+    if (enabled) {
+      next[taskType] = next[taskType]?.length ? [...next[taskType]!] : [...availableModels];
+    } else {
+      delete next[taskType];
+    }
+    patch("taskAccess", next);
+  }
+
+  function toggleModel(taskType: string, label: string, checked: boolean) {
+    const current = value.taskAccess[taskType] ?? [];
+    const nextLabels = checked
+      ? [...new Set([...current, label])]
+      : current.filter((m) => m !== label);
+    patch("taskAccess", { ...value.taskAccess, [taskType]: nextLabels });
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -221,6 +241,48 @@ export default function AdminPlanForm({
               checked={value.ragAnalyticsEnabled}
               onChange={(v) => patch("ragAnalyticsEnabled", v)}
             />
+          </div>
+        </section>
+
+        <section className={styles.section} aria-labelledby="plan-task-access">
+          <h4 id="plan-task-access" className={styles.sectionTitle}>
+            Task &amp; model access
+          </h4>
+          <p className={styles.sectionHint}>
+            Which API task types and public model labels this plan may use. Ollama backend ids are
+            configured in the server task catalog.
+          </p>
+          <div className={styles.taskAccessGrid}>
+            {catalog.map((entry) => {
+              const enabled = entry.taskType in value.taskAccess;
+              const selected = value.taskAccess[entry.taskType] ?? [];
+              return (
+                <div key={entry.taskType} className={styles.taskAccessCard}>
+                  <ToggleRow
+                    label={entry.taskType}
+                    checked={enabled}
+                    onChange={(v) => setTaskEnabled(entry.taskType, v, entry.availableModels)}
+                    hint={`Provider: ${entry.provider}`}
+                  />
+                  {enabled ? (
+                    <div className={styles.modelCheckGrid}>
+                      {entry.availableModels.map((label) => (
+                        <label key={label} className={styles.modelCheck}>
+                          <input
+                            type="checkbox"
+                            checked={selected.includes(label)}
+                            onChange={(e) =>
+                              toggleModel(entry.taskType, label, e.target.checked)
+                            }
+                          />
+                          <span>{label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         </section>
 

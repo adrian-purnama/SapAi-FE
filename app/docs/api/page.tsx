@@ -7,7 +7,7 @@ import { DocsPageHeader } from "@/app/docs/components/DocsPageHeader";
 import { API_DOCS_NAV } from "./docsNav";
 
 export const metadata: Metadata = {
-  title: "API documentation — SapAi",
+  title: "API documentation   SapAi",
   description: "SapAi standalone Fastify API and Next.js route handlers.",
 };
 
@@ -26,25 +26,25 @@ export default function DocsApiHubPage() {
               <Link href="/docs/api/server/test" className="font-medium underline underline-offset-2 hover:text-sky-900">
                 Test API key
               </Link>{" "}
-              — validate connectivity
+                validate connectivity
             </li>
             <li>
               <Link href="/docs/api/server/models" className="font-medium underline underline-offset-2 hover:text-sky-900">
                 Chat models
               </Link>{" "}
-              — list allowed model ids
+                list allowed model ids
             </li>
             <li>
               <Link href="/docs/api/server/chat" className="font-medium underline underline-offset-2 hover:text-sky-900">
                 Chat jobs
               </Link>{" "}
-              — send, poll, and stream
+                send, poll, and stream
             </li>
             <li>
               <Link href="/docs/api/guides/embed" className="font-medium underline underline-offset-2 hover:text-sky-900">
                 Embed widget
               </Link>{" "}
-              — dashboard setup guide
+                dashboard setup guide
             </li>
           </ol>
         </DocsCallout>

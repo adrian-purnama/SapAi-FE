@@ -47,6 +47,18 @@ type Props = {
 
 const HEX_EMBED = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 
+const EMBED_WAIT_MESSAGES = [
+  "Thinking…",
+  "Reading your docs…",
+  "Please wait   the AI is still waking up…",
+  "Consulting the knowledge base…",
+  "Connecting a few neurons…",
+  "Sharpening pencils…",
+  "Almost there…",
+] as const;
+
+const WAIT_MESSAGE_MS = 2800;
+
 function resolveAccent(embedColor: string | null | undefined): string {
   const t = embedColor?.trim() ?? "";
   return t && HEX_EMBED.test(t) ? t : "#18181b";
@@ -165,6 +177,7 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
   const [isEmbedded, setIsEmbedded] = useState(false);
   const [parentControlledClose, setParentControlledClose] = useState(false);
   const [livePreviewEmbed, setLivePreviewEmbed] = useState(false);
+  const [waitMsgIdx, setWaitMsgIdx] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
   const greetingInjectedRef = useRef(false);
   const storageTokenRef = useRef(token);
@@ -217,6 +230,17 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, rag.running]);
+
+  useEffect(() => {
+    if (!rag.running) {
+      setWaitMsgIdx(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setWaitMsgIdx((i) => (i + 1) % EMBED_WAIT_MESSAGES.length);
+    }, WAIT_MESSAGE_MS);
+    return () => clearInterval(id);
+  }, [rag.running]);
 
   const send = useCallback(async () => {
     const q = draft.trim();
@@ -381,7 +405,7 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
           >
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" aria-hidden />
             <p className="leading-relaxed">
-              This assistant is unavailable — the embed may be off, the link invalid, or the plan may not include
+              This assistant is unavailable   the embed may be off, the link invalid, or the plan may not include
               public embed.
             </p>
           </div>
@@ -473,7 +497,16 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
                   compact ? "px-3 py-2.5" : "px-4 py-3",
                 )}
               >
-                <span className="sr-only">Assistant is typing</span>
+                <p
+                  className={cn(
+                    "mb-2 font-medium text-zinc-600",
+                    compact ? "text-xs" : "text-sm",
+                    styles.waitMessage,
+                  )}
+                  key={waitMsgIdx}
+                >
+                  {EMBED_WAIT_MESSAGES[waitMsgIdx]}
+                </p>
                 <div className={styles.typingBubble} aria-hidden>
                   <span className={styles.typingDot} />
                   <span className={styles.typingDot} />

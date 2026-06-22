@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Layers, Pencil, Plus, RefreshCw, X } from "lucide-react";
 
 import AdminPlanForm from "./AdminPlanForm";
-import { EMPTY_PLAN_INPUT, planToInput, type AdminPlan, type AdminPlanInput } from "./types";
+import { EMPTY_PLAN_INPUT, planToInput, taskAccessFromCatalog, type AdminPlan, type AdminPlanInput } from "./types";
 import { useAdminPlans } from "./useAdminPlans";
 import styles from "./AdminPlansPanel.module.css";
 
@@ -82,7 +82,7 @@ function PlanCard({
 }
 
 export default function AdminPlansPanel() {
-  const { plans, loading, saving, error, hasAuth, refetch, createPlan, updatePlan, deletePlan } =
+  const { plans, taskCatalog, loading, saving, error, hasAuth, refetch, createPlan, updatePlan, deletePlan } =
     useAdminPlans();
 
   const [editorMode, setEditorMode] = useState<"none" | "create" | "edit">("none");
@@ -92,7 +92,10 @@ export default function AdminPlansPanel() {
   function openCreate() {
     setEditorMode("create");
     setEditingId(null);
-    setDraft(EMPTY_PLAN_INPUT);
+    setDraft({
+      ...EMPTY_PLAN_INPUT,
+      taskAccess: taskAccessFromCatalog(taskCatalog),
+    });
   }
 
   function openEdit(plan: AdminPlan) {
@@ -132,9 +135,9 @@ export default function AdminPlansPanel() {
   return (
     <section className={styles.panel} aria-label="Subscription plans">
       <div className={styles.toolbar}>
-        <p className={styles.toolbarMeta}>
+        {/* <p className={styles.toolbarMeta}>
           {loading ? "Loading…" : `${plans.length} plan${plans.length === 1 ? "" : "s"} in MongoDB`}
-        </p>
+        </p> */}
         <div className={styles.toolbarActions}>
           <button type="button" onClick={() => void refetch()} className={styles.iconBtn}>
             <RefreshCw className="h-4 w-4" aria-hidden />
@@ -214,6 +217,7 @@ export default function AdminPlansPanel() {
                 <AdminPlanForm
                   mode={editorMode}
                   value={draft}
+                  catalog={taskCatalog}
                   onChange={setDraft}
                   saving={saving}
                   onSubmit={handleSubmit}

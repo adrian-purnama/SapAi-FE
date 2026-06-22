@@ -106,7 +106,7 @@ export type DateRangePickerProps = {
   onRangeChange: (from: string, to: string) => void;
   /** Prefix for generated ids. */
   idPrefix?: string;
-  /** Less vertical padding — e.g. filter toolbars. */
+  /** Less vertical padding   e.g. filter toolbars. */
   compact?: boolean;
 };
 

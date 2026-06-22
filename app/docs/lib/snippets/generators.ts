@@ -1,6 +1,6 @@
 import { bashDoubleQuoted, bashSingleQuotedJson } from "./escape";
 
-/** Canonical resolved HTTP example — one shape for every language generator. */
+/** Canonical resolved HTTP example   one shape for every language generator. */
 export type SnippetRequest = {
   method: string;
   url: string;

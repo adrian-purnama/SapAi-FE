@@ -56,7 +56,7 @@ export default function LoginPageContent() {
             </div>
           ) : null}
           <h1 className="text-xl font-semibold">
-            {appConfig.appName ? `${appConfig.appName} — ` : null}
+            {appConfig.appName ? `${appConfig.appName}   ` : null}
             Login unavailable
           </h1>
           <p className="mt-2 text-zinc-600">Sign-in is currently disabled by the administrator.</p>

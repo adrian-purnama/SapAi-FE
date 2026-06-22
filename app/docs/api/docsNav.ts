@@ -54,19 +54,19 @@ export const API_DOCS_NAV: DocsNavGroup[] = [
       {
         href: "/docs/api/server/models",
         label: "Chat models",
-        summary: "GET /api/v1/chat/models — allowed model ids for jobs.",
+        summary: "GET /api/v1/chat/models   task types and model labels for your plan.",
       },
       {
         href: "/docs/api/server/chat",
         label: "Chat jobs",
-        summary: "POST /api/v1/chat — chat, RAG, translate; poll and stream with a shared job id.",
+        summary: "POST /api/v1/chat   chat, RAG, translate; poll and stream with a shared job id.",
         subItems: CHAT_JOBS_SUB_ITEMS,
       },
     ],
   },
 ];
 
-/** Standalone + Next groups only — used on the API hub for card links. */
+/** Standalone + Next groups only   used on the API hub for card links. */
 export function getApiDocsHubCardItems(): DocsNavItem[] {
   return API_DOCS_NAV.filter((g) => g.group !== "Overview").flatMap((g) => g.items);
 }

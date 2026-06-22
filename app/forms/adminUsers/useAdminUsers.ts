@@ -11,6 +11,11 @@ export type AdminUserPlanRef = {
   name: string;
 } | null;
 
+export type AdminUserEffectivePlan = {
+  slug: string;
+  name: string;
+} | null;
+
 export type AdminUserRow = {
   id: string;
   email: string;
@@ -19,6 +24,9 @@ export type AdminUserRow = {
   isEmailVerified: boolean;
   isBlocked: boolean;
   plan: AdminUserPlanRef;
+  planExpiresAt: string | null;
+  isPlanExpired: boolean;
+  effectivePlan: AdminUserEffectivePlan;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -84,7 +92,7 @@ export function useAdminUsers() {
   const patchUser = useCallback(
     async (
       userId: string,
-      patch: Partial<{ planId: string | null; isBlocked: boolean }>,
+      patch: Partial<{ planId: string | null; planExpiresAt: string | null; isBlocked: boolean }>,
     ) => {
       if (!authHeaders) throw new Error("Not authenticated.");
       const res = await fetch(joinServerApiPath(`/api/v1/admin/users/${encodeURIComponent(userId)}`), {

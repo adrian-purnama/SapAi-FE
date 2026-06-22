@@ -5,7 +5,7 @@ import { ApiHttpExamplesPanel } from "@/app/docs/components/ApiHttpExamplesPanel
 import { DocsPageHeader } from "@/app/docs/components/DocsPageHeader";
 
 export const metadata: Metadata = {
-  title: "Standalone API — Test & health — SapAi",
+  title: "Standalone API   Test & health   SapAi",
   description: "Health and connectivity endpoints for the SapAi Fastify server.",
 };
 
@@ -44,7 +44,7 @@ export default function ServerTestDocsPage() {
         }
         exampleResponses={[
           {
-            title: "200 OK — key valid",
+            title: "200 OK   key valid",
             body: `{
   "ok": true,
   "label": "Production server",
@@ -54,7 +54,7 @@ export default function ServerTestDocsPage() {
 }`,
           },
           {
-            title: "401 — missing or invalid key",
+            title: "401   missing or invalid key",
             body: `{
   "message": "Invalid or missing API key."
 }`,

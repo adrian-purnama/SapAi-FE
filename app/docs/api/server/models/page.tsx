@@ -6,7 +6,7 @@ import { ApiHttpExamplesPanel } from "@/app/docs/components/ApiHttpExamplesPanel
 import { DocsPageHeader } from "@/app/docs/components/DocsPageHeader";
 
 export const metadata: Metadata = {
-  title: "Standalone API — Chat models — SapAi",
+  title: "Standalone API   Chat models   SapAi",
   description: "List allowed model labels for chat jobs.",
 };
 
@@ -36,8 +36,8 @@ export default function ServerModelsDocsPage() {
         authLabel="API key"
         description={
           <>
-            Requires header <code className="rounded bg-zinc-100 px-1 font-mono text-xs">x-api-key</code>. Returns a
-            JSON array of model id strings for chat requests.
+            Requires header <code className="rounded bg-zinc-100 px-1 font-mono text-xs">x-api-key</code>. Returns
+            task types and model labels allowed on your plan.
           </>
         }
         tryIt={
@@ -52,9 +52,18 @@ export default function ServerModelsDocsPage() {
         exampleResponses={[
           {
             title: "200 OK",
-            body: `[
-  "OCT3Q"
-]`,
+            body: `{
+  "success": true,
+  "data": {
+    "taskTypes": ["chat", "rag", "translate"],
+    "modelsByTask": {
+      "chat": ["<modelLabel>"],
+      "rag": ["<modelLabel>"],
+      "translate": ["TRANSLATE"]
+    }
+  },
+  "error": null
+}`,
           },
         ]}
       />

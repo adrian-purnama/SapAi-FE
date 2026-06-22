@@ -7,11 +7,6 @@ const nextConfig: NextConfig = {
       process.env.RECAPTCHA_SITE_KEY?.trim() ||
       "",
   },
-  /**
-   * pdfjs (used by `pdf-parse`) must resolve `pdf.worker.mjs` from `node_modules`.
-   * Bundling it into `.next` breaks worker paths under Turbopack.
-   */
-  serverExternalPackages: ["pdf-parse", "pdfjs-dist"],
   images: {
     remotePatterns: [
       {

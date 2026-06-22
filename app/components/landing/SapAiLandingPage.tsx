@@ -18,13 +18,13 @@ import { useSapAiLandingAnimations } from "./useSapAiLandingAnimations";
 import { Highlighter } from "@/components/ui/highlighter"
 import { SparklesText } from "@/components/ui/sparkles-text"
 
-/** [React Bits DotField](https://www.reactbits.dev/tools/background-studio) — canvas + cursor glow; no SSR. */
+/** [React Bits DotField](https://www.reactbits.dev/tools/background-studio)   canvas + cursor glow; no SSR. */
 const DotField = dynamic(() => import("@/components/DotField"), {
   ssr: false,
   loading: () => <div className="fixed inset-0 z-0 bg-zinc-50" aria-hidden />,
 });
 
-/** React Bits ColorBends — WebGL shader; no SSR. */
+/** React Bits ColorBends   WebGL shader; no SSR. */
 const ColorBends = dynamic(() => import("@/components/ColorBends"), {
   ssr: false,
 });
@@ -305,7 +305,7 @@ export default function SapAiLandingPage() {
             <ul className="mt-8 space-y-4 text-sm text-zinc-700">
               {[
                 "Per-project FAQ documents and categories for RAG",
-                "Server-side chat jobs via API key — embed uses a separate token",
+                "Server-side chat jobs via API key   embed uses a separate token",
                 "Dashboard for keys, FAQ workspace, and analytics on paid plans",
               ].map((t) => (
                 <li key={t} className="flex items-center gap-3">
@@ -328,7 +328,7 @@ export default function SapAiLandingPage() {
                   <div className="min-w-0">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Knowledge</p>
                     <p className="mt-1 text-sm leading-snug text-zinc-800">
-                      Docs attach to one API key / project — every RAG reply stays scoped to that set.
+                      Docs attach to one API key / project   every RAG reply stays scoped to that set.
                     </p>
                   </div>
                 </div>
@@ -356,7 +356,7 @@ export default function SapAiLandingPage() {
                   <div className="min-w-0">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-800/90">Public embed</p>
                     <p className="mt-1 text-sm leading-snug text-zinc-800">
-                      Lightweight iframe widget on your domain — styled from the dashboard, scoped with an embed token
+                      Lightweight iframe widget on your domain   styled from the dashboard, scoped with an embed token
                       (not your secret API key).
                     </p>
                   </div>
@@ -437,7 +437,7 @@ export default function SapAiLandingPage() {
                 <Link href="/docs/api" className="font-medium text-zinc-800 underline-offset-2 hover:underline">
                   API docs
                 </Link>{" "}
-                — and tell us what breaks.
+                  and tell us what breaks.
               </p>
             </footer>
           </div>

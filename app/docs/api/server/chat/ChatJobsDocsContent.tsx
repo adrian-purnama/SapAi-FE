@@ -44,7 +44,7 @@ function ChatJobsDocsBody() {
             <a href="#check" className="font-medium text-sky-800 underline-offset-2 hover:underline">
               Check
             </a>{" "}
-            is used to poll and stream — no need to switch pages.
+            is used to poll and stream   no need to switch pages.
           </>
         }
       >
@@ -62,13 +62,13 @@ function ChatJobsDocsBody() {
               <a href="#translate" className="font-medium text-sky-800 underline-offset-2 hover:underline">
                 Translate
               </a>{" "}
-              — Run POST and copy <code className="font-mono text-xs">job.id</code> (auto-filled below).
+                Run POST and copy <code className="font-mono text-xs">job.id</code> (auto-filled below).
             </li>
             <li>
               <a href="#check" className="font-medium text-sky-800 underline-offset-2 hover:underline">
                 Check
               </a>{" "}
-              — poll <code className="font-mono text-xs">GET /api/v1/chat/jobs/:id</code> or open the WebSocket URL.
+                poll <code className="font-mono text-xs">GET /api/v1/chat/jobs/:id</code> or open the WebSocket URL.
             </li>
             <li>
               Lazy? Use <strong className="font-medium">Copy AI prompt</strong> in any section and paste into your AI
@@ -98,7 +98,7 @@ function ChatJobsDocsBody() {
               title: "Minimal chat",
               body: `{
   "taskType": "chat",
-  "model": "OCT3Q",
+  "model": "<modelLabel>",
   "input": [{ "role": "user", "content": "Hello!" }],
   "maxTokens": 500
 }`,
@@ -106,14 +106,14 @@ function ChatJobsDocsBody() {
           ]}
           exampleResponses={[
             {
-              title: "200 OK — enqueue",
+              title: "200 OK   enqueue",
               body: `{
   "ok": true,
   "job": {
     "id": "507f1f77bcf86cd799439011",
     "status": "pending",
     "taskType": "chat",
-    "model": "OCT3Q"
+    "model": "<modelLabel>"
   }
 }`,
             },
@@ -146,7 +146,7 @@ function ChatJobsDocsBody() {
               title: "FAQ question",
               body: `{
   "taskType": "rag",
-  "model": "OCT3Q",
+  "model": "<modelLabel>",
   "input": [{ "role": "user", "content": "What is the refund policy?" }],
   "maxTokens": 500
 }`,
@@ -154,14 +154,14 @@ function ChatJobsDocsBody() {
           ]}
           exampleResponses={[
             {
-              title: "200 OK — enqueue",
+              title: "200 OK   enqueue",
               body: `{
   "ok": true,
   "job": {
     "id": "507f1f77bcf86cd799439011",
     "status": "pending",
     "taskType": "rag",
-    "model": "OCT3Q"
+    "model": "<modelLabel>"
   }
 }`,
             },
@@ -178,7 +178,7 @@ function ChatJobsDocsBody() {
           authLabel="API key · taskType translate"
           description={
             <>
-              Language translation via Ollama translate model. No <code className="font-mono text-xs">model</code> field —
+              Language translation via Ollama translate model. No <code className="font-mono text-xs">model</code> field  
               use <code className="font-mono text-xs">sourceLang</code>, <code className="font-mono text-xs">targetLang</code>
               , and <code className="font-mono text-xs">text</code>.
             </>
@@ -206,7 +206,7 @@ function ChatJobsDocsBody() {
           ]}
           exampleResponses={[
             {
-              title: "200 OK — enqueue",
+              title: "200 OK   enqueue",
               body: `{
   "ok": true,
   "job": {
@@ -226,7 +226,7 @@ function ChatJobsDocsBody() {
           <h2 className="text-xl font-semibold tracking-tight text-zinc-900">Check</h2>
           <p className="text-base leading-relaxed text-zinc-600">
             After any POST above, use the same <code className="font-mono text-xs">job.id</code> here to poll or stream.
-            The field below is shared — Run a chat/RAG/translate job and it updates automatically.
+            The field below is shared   Run a chat/RAG/translate job and it updates automatically.
           </p>
           <DocsAiPromptCopy prompt={CHECK_JOB_AI_PROMPT} />
         </div>
@@ -253,18 +253,18 @@ function ChatJobsDocsBody() {
           }
           exampleResponses={[
             {
-              title: "200 OK — completed",
+              title: "200 OK   completed",
               body: `{
   "id": "507f1f77bcf86cd799439011",
   "status": "completed_full",
   "taskType": "chat",
-  "model": "OCT3Q",
+  "model": "<modelLabel>",
   "result": { "text": "…", "totalTokens": 30 },
   "error": null
 }`,
             },
             {
-              title: "404 — unknown id or wrong key",
+              title: "404   unknown id or wrong key",
               body: `{ "message": "Job not found" }`,
             },
           ]}

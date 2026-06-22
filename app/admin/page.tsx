@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Layers, Settings, Users } from "lucide-react";
+import { Layers, MessageSquare, Settings, Users } from "lucide-react";
 
 export default function AdminPage() {
   return (
@@ -62,6 +62,26 @@ export default function AdminPage() {
               <h2 className="text-lg font-semibold text-zinc-900">Users</h2>
               <p className="mt-1 text-sm text-zinc-600">
                 Tokens, plan, blocks, and password resets.
+              </p>
+              <p className="mt-4 text-sm font-semibold text-zinc-900 transition group-hover:text-zinc-800">
+                Open →
+              </p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/chat-jobs"
+          className="group rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md"
+        >
+          <div className="flex items-start gap-3">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-700">
+              <MessageSquare className="h-5 w-5" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-zinc-900">Chat jobs</h2>
+              <p className="mt-1 text-sm text-zinc-600">
+                All chat, RAG, and translate jobs with filters and full job view.
               </p>
               <p className="mt-4 text-sm font-semibold text-zinc-900 transition group-hover:text-zinc-800">
                 Open →

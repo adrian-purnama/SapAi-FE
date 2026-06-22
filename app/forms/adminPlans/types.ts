@@ -19,8 +19,15 @@ export type AdminPlan = {
   ragAnalyticsEnabled: boolean;
   priceLabel: string | null;
   priceNote: string | null;
+  taskAccess: Record<string, string[]>;
   createdAt: string | null;
   updatedAt: string | null;
+};
+
+export type TaskCatalogEntry = {
+  taskType: string;
+  provider: string;
+  availableModels: string[];
 };
 
 export type AdminPlanInput = {
@@ -43,7 +50,12 @@ export type AdminPlanInput = {
   ragAnalyticsEnabled: boolean;
   priceLabel: string;
   priceNote: string;
+  taskAccess: Record<string, string[]>;
 };
+
+export function taskAccessFromCatalog(catalog: TaskCatalogEntry[]): Record<string, string[]> {
+  return Object.fromEntries(catalog.map((e) => [e.taskType, [...e.availableModels]]));
+}
 
 export const EMPTY_PLAN_INPUT: AdminPlanInput = {
   slug: "",
@@ -65,6 +77,7 @@ export const EMPTY_PLAN_INPUT: AdminPlanInput = {
   ragAnalyticsEnabled: false,
   priceLabel: "",
   priceNote: "",
+  taskAccess: {},
 };
 
 export function planToInput(plan: AdminPlan): AdminPlanInput {
@@ -88,6 +101,7 @@ export function planToInput(plan: AdminPlan): AdminPlanInput {
     ragAnalyticsEnabled: plan.ragAnalyticsEnabled,
     priceLabel: plan.priceLabel ?? "",
     priceNote: plan.priceNote ?? "",
+    taskAccess: { ...plan.taskAccess },
   };
 }
 
@@ -112,6 +126,7 @@ export function inputToCreateBody(input: AdminPlanInput) {
     ragAnalyticsEnabled: input.ragAnalyticsEnabled,
     priceLabel: input.priceLabel.trim() || null,
     priceNote: input.priceNote.trim() || null,
+    taskAccess: input.taskAccess,
   };
 }
 

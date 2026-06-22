@@ -14,7 +14,7 @@ export const RAG_CHART_MODE_OPTIONS: { id: RagInsightChartMode; label: string; d
   { id: "answerable", label: "Answerable", description: "Share of classified jobs by answerability" },
   { id: "intent", label: "Intent", description: "Share by FAQ intent" },
   { id: "category", label: "Category", description: "Top FAQ categories in the current filter" },
-  { id: "weak", label: "Gaps", description: "Grouped no/unclear questions — mark resolved after updating Markdown" },
+  { id: "weak", label: "Gaps", description: "Grouped no/unclear questions   mark resolved after updating Markdown" },
 ];
 
 function buildRagDistributionRows(
@@ -50,7 +50,7 @@ function rowColor(mode: RagInsightChartMode, key: string, index: number): string
 }
 
 function formatShortIso(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return " ";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return new Intl.DateTimeFormat("en-GB", {

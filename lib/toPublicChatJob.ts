@@ -1,4 +1,4 @@
-/** Same shape as server `toPublicChatJob` — dashboard / internal API responses. */
+/** Public chat job shape returned by the standalone API. */
 
 export type PublicRagAnalysis = {
   category: string | null;
@@ -14,6 +14,7 @@ export type PublicChatJobResponse = {
   ragAnalysis: PublicRagAnalysis | null;
   model: string;
   maxTokens: number;
+  useDeepSeek: boolean | null;
   result: {
     text: string | null;
     json: unknown;
@@ -28,79 +29,18 @@ export type PublicChatJobResponse = {
   updatedAt?: Date;
 };
 
-type RagAnalysisLike = {
-  category?: string | null;
-  answerable?: string | null;
-  intent?: string | null;
-} | null;
-
-type JobDocLike = {
-  _id: { toString(): string } | string;
-  status: string;
-  taskType: string;
-  model: string;
-  maxTokens?: number | null;
-  input?: Array<{ role?: string; content?: string }> | null;
-  ragAnalysis?: RagAnalysisLike;
-  result?: {
-    text?: string | null;
-    json?: unknown;
-    promptTokens?: number | null;
-    completionTokens?: number | null;
-    totalTokens?: number | null;
-  } | null;
-  error?: { message?: string | null; code?: string | null } | null;
-  startedAt?: Date | null;
-  finishedAt?: Date | null;
-  createdAt?: Date;
-  updatedAt?: Date;
+export type RagInsightsExportSummary = {
+  totalQueries: number;
+  answerableYes: number;
+  answerableNo: number;
+  answerablePartial: number;
+  topCategories: Array<{ category: string; count: number }>;
+  weakAnswers: Array<{
+    jobId: string;
+    question: string;
+    answerable: string | null;
+    intent: string | null;
+    category: string | null;
+    finishedAt: string | null;
+  }>;
 };
-
-function mapRagAnalysis(ra: RagAnalysisLike): PublicRagAnalysis | null {
-  if (!ra || typeof ra !== "object") return null;
-  return {
-    category: ra.category ?? null,
-    answerable: ra.answerable ?? null,
-    intent: ra.intent ?? null,
-  };
-}
-
-export function toPublicChatJob(doc: JobDocLike): PublicChatJobResponse {
-  const r = doc.result;
-  const input = Array.isArray(doc.input) ? doc.input : [];
-  const lastUser = [...input].reverse().find((m) => m?.role === "user");
-  const question =
-    typeof lastUser?.content === "string" && lastUser.content.trim().length > 0
-      ? lastUser.content.trim()
-      : null;
-
-  return {
-    id: typeof doc._id === "string" ? doc._id : doc._id.toString(),
-    status: doc.status,
-    taskType: doc.taskType,
-    question,
-    ragAnalysis: mapRagAnalysis(doc.ragAnalysis ?? null),
-    model: doc.model,
-    maxTokens: doc.maxTokens ?? 500,
-    result: r
-      ? {
-          text: r.text ?? null,
-          json: r.json ?? null,
-          promptTokens: r.promptTokens ?? 0,
-          completionTokens: r.completionTokens ?? 0,
-          totalTokens: r.totalTokens ?? 0,
-        }
-      : null,
-    error:
-      doc.error && (doc.error.message != null || doc.error.code != null)
-        ? {
-            message: doc.error.message ?? null,
-            code: doc.error.code ?? null,
-          }
-        : null,
-    startedAt: doc.startedAt ?? null,
-    finishedAt: doc.finishedAt ?? null,
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
-  };
-}

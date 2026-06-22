@@ -66,7 +66,7 @@ export default function EmbedDashboardGuidePage() {
             <Link href="/dashboard" className="font-medium underline underline-offset-2 hover:text-amber-900">
               Dashboard
             </Link>
-            . Each project is one API key — pick the project whose knowledge the widget should use.
+            . Each project is one API key   pick the project whose knowledge the widget should use.
           </li>
           <li>
             <strong className="font-medium">Roughly 10–15 minutes</strong> for first setup: upload docs, generate token,
@@ -110,8 +110,8 @@ export default function EmbedDashboardGuidePage() {
             </span>
             <h3 className="font-semibold text-zinc-900">Teach the assistant</h3>
             <p className="mt-2 text-sm leading-relaxed text-zinc-600">
-              <strong className="text-zinc-800">Knowledge</strong> — upload Markdown files with the content visitors
-              should ask about. <strong className="text-zinc-800">Categories</strong> — optional labels to organize
+              <strong className="text-zinc-800">Knowledge</strong>   upload Markdown files with the content visitors
+              should ask about. <strong className="text-zinc-800">Categories</strong>   optional labels to organize
               answers.
             </p>
           </li>

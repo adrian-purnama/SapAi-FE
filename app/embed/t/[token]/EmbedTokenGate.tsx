@@ -85,17 +85,22 @@ export function EmbedTokenGate({ token }: Props) {
         if (cancelled) return;
         if (res.ok) {
           const j = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+          const data =
+            j?.success === true && j.data && typeof j.data === "object"
+              ? (j.data as Record<string, unknown>)
+              : j;
           setBranding({
-            assistantName: nilStr(j?.assistantName),
-            assistantDescription: nilStr(j?.assistantDescription),
-            assistantGreeting: nilStr(j?.assistantGreeting),
-            embedColor: nilStr(j?.embedColor),
-            assistantProfileUrl: nilStr(j?.assistantProfileUrl),
-            aiDisclaimer: nilStr(j?.aiDisclaimer),
-            furtherInfoLink: parseFurtherInfoLink(j?.furtherInfoLink),
-            appBadge: parseAppBadge(j?.appBadge),
+            assistantName: nilStr(data?.assistantName),
+            assistantDescription: nilStr(data?.assistantDescription),
+            assistantGreeting: nilStr(data?.assistantGreeting),
+            embedColor: nilStr(data?.embedColor),
+            assistantProfileUrl: nilStr(data?.assistantProfileUrl),
+            aiDisclaimer: nilStr(data?.aiDisclaimer),
+            furtherInfoLink: parseFurtherInfoLink(data?.furtherInfoLink),
+            appBadge: parseAppBadge(data?.appBadge),
           });
-          setStatus(j?.ok === true && j?.active === true ? "active" : "inactive");
+          const active = data?.active === true || (j?.ok === true && j?.active === true);
+          setStatus(active ? "active" : "inactive");
         } else {
           setBranding(null);
           setStatus("inactive");

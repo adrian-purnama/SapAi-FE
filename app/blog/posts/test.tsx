@@ -16,7 +16,7 @@ export default function WelcomeToSapAiContent() {
     <>
       <p>
         SapAi is an AI-powered chatbot platform for websites. You upload knowledge, get an API key, and
-        answer visitors from your own content — or embed a branded chat widget on any site.
+        answer visitors from your own content   or embed a branded chat widget on any site.
       </p>
 
       <h2>What you can do today</h2>
@@ -36,7 +36,7 @@ export default function WelcomeToSapAiContent() {
 
       <h2>See it in action</h2>
       <p>
-        Self-hosted video files work too — place an mp4 under{" "}
+        Self-hosted video files work too   place an mp4 under{" "}
         <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-sm">public/blog/&lt;slug&gt;/</code>{" "}
         and use <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-sm">BlogVideo</code>. YouTube
         embeds use <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-sm">type=&quot;youtube&quot;</code>{" "}

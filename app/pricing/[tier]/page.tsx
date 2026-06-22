@@ -15,7 +15,7 @@ function normalizeTierId(raw: string): TierId | null {
 }
 
 function TierLimitValue({ value }: { value: string }) {
-  if (value === "—") {
+  if (value === " ") {
     return (
       <span className="inline-flex text-zinc-400" title="Not included" aria-label="Not included">
         <X className="h-4 w-4" strokeWidth={2.25} aria-hidden />
@@ -52,7 +52,7 @@ const TIER_CONTENT: Record<
     price: "0",
     priceNote: "forever",
     badge: "Just Do It",
-    description: "Prove the API and FAQ RAG on one project — upgrade when you need embed or analytics.",
+    description: "Prove the API and FAQ RAG on one project   upgrade when you need embed or analytics.",
     cta: "Start free",
     bullets: [
       "1 API key",
@@ -67,7 +67,7 @@ const TIER_CONTENT: Record<
       { label: "API keys (total)", value: "1" },
       { label: "Chat + RAG via API", value: "Included" },
       { label: "Queue", value: "Unlimited" },
-      { label: "Priority processing", value: "—" },
+      { label: "Priority processing", value: " " },
       { label: "API requests / minute (per key)", value: "10" },
       { label: "Max characters per message", value: "700" },
       { label: "Knowledge files / project", value: "1" },
@@ -75,8 +75,8 @@ const TIER_CONTENT: Record<
       { label: "Max file size", value: "1 MB" },
       { label: "Vector search storage", value: "Included" },
       { label: "Usage & RAG insights", value: "1 day" },
-      { label: "Public embed widget", value: "—" },
-      { label: "Embed badge & disclaimer", value: "—" },
+      { label: "Public embed widget", value: " " },
+      { label: "Embed badge & disclaimer", value: " " },
     ],
   },
   pro: {
@@ -94,7 +94,7 @@ const TIER_CONTENT: Record<
       "3,000 characters per message",
       "5 Markdown (.md) files per project · 10 MB each",
       "Vector search storage included",
-      "Usage & RAG insights — 3 months",
+      "Usage & RAG insights   3 months",
       "Public embed widget (iframe) on your site",
       "Fixed “Provided by SapAi” badge on embed",
     ],
@@ -129,7 +129,7 @@ const TIER_CONTENT: Record<
       "10,000 characters per message",
       "10 Markdown (.md) files per project · 15 MB each",
       "Vector search storage included",
-      "Usage & RAG insights — 12 months",
+      "Usage & RAG insights   12 months",
       "Public embed widget (iframe) on your site",
       "Custom embed badge & AI disclaimer",
     ],
@@ -282,7 +282,7 @@ export default async function PricingTierPage({
       <section className="mt-8 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
         <div className="border-b border-zinc-100 px-6 py-5">
           <h2 className="text-lg font-semibold text-zinc-900">Limits & inclusions</h2>
-          <p className="mt-1 text-sm text-zinc-600">Same numbers as the main pricing comparison—no surprises at signup.</p>
+          <p className="mt-1 text-sm text-zinc-600">Same numbers as the main pricing comparison no surprises at signup.</p>
         </div>
         <dl className="grid gap-0 md:grid-cols-2">
           {content.limits.map((row, idx) => (

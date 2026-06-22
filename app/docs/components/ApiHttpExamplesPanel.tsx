@@ -11,7 +11,6 @@ import {
 import { SNIPPET_LANGUAGES } from "@/app/docs/lib/snippets/generators";
 
 import {
-  ALLOWED_CHAT_MODEL_IDS,
   MESSAGE_ROLES,
   TASK_TYPES,
   type MessageRole,
@@ -322,7 +321,7 @@ function ChatJobExamples({
 }) {
   const ctx = useApiDocsSettings();
   const [taskType, setTaskType] = useState<TaskType>(fixedTaskType ?? "chat");
-  const [model, setModel] = useState<string>(ALLOWED_CHAT_MODEL_IDS[0]);
+  const [model, setModel] = useState("");
   const [role, setRole] = useState<MessageRole>("user");
   const [content, setContent] = useState("Hello");
   const [sourceLang, setSourceLang] = useState("English");
@@ -333,7 +332,7 @@ function ChatJobExamples({
   const [maxTokens, setMaxTokens] = useState("500");
   const [outputJsonTemplate, setOutputJsonTemplate] = useState("");
   const [taskTypeOptions, setTaskTypeOptions] = useState<string[]>(() => [...TASK_TYPES]);
-  const [modelOptions, setModelOptions] = useState<string[]>(() => [...ALLOWED_CHAT_MODEL_IDS]);
+  const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [builderRows, setBuilderRows] = useState<TemplateBuilderRow[]>(() => [
     { id: newRowId(), propertyKey: "color", placeholder: "$color" },
     { id: newRowId(), propertyKey: "uniqueName", placeholder: "$uniqueName" },
@@ -363,9 +362,10 @@ function ChatJobExamples({
     }
 
     const text = content.trim() || "Hello";
+    const effectiveModel = model || modelOptions[0] || "";
     const base: Record<string, unknown> = {
       taskType: effectiveTaskType,
-      model,
+      model: effectiveModel,
       input: [{ role, content: text }],
       maxTokens: max,
     };
@@ -377,7 +377,7 @@ function ChatJobExamples({
   }, [
     effectiveTaskType,
     isTranslate,
-    model,
+    modelOptions,
     role,
     content,
     sourceLang,
@@ -410,43 +410,40 @@ function ChatJobExamples({
     if (!key) return;
     void (async () => {
       try {
-        const res = await fetch(`${base}/api/v1/chat/task-types`, {
-          method: "GET",
-          headers: { "x-api-key": key },
-        });
-        const json = (await res.json().catch(() => null)) as unknown;
-        if (!res.ok || !Array.isArray(json)) return;
-        const list = json.filter((x) => typeof x === "string") as string[];
-        if (list.length > 0) setTaskTypeOptions(list);
-      } catch {
-        // ignore
-      }
-    })();
-  }, [standaloneBase, ctx.apiKey]);
-
-  useEffect(() => {
-    const base = standaloneBase.replace(/\/$/, "");
-    const key = ctx.apiKey.trim();
-    if (!key) return;
-    void (async () => {
-      try {
         const res = await fetch(`${base}/api/v1/chat/models`, {
           method: "GET",
           headers: { "x-api-key": key },
         });
-        const json = (await res.json().catch(() => null)) as unknown;
-        if (!res.ok || !Array.isArray(json)) return;
-        const list = json.filter((x) => typeof x === "string") as string[];
-        if (list.length > 0) {
-          setModelOptions(list);
-          if (!list.includes(model)) setModel(list[0]!);
+        const json = (await res.json().catch(() => null)) as {
+          success?: boolean;
+          data?: { taskTypes?: string[]; modelsByTask?: Record<string, string[]> } | string[];
+        } | null;
+        if (!res.ok || !json) return;
+        const data = json.data ?? json;
+        if (data && typeof data === "object" && !Array.isArray(data)) {
+          const access = data as { taskTypes?: string[]; modelsByTask?: Record<string, string[]> };
+          const list = access.taskTypes?.filter((x) => typeof x === "string") ?? [];
+          if (list.length > 0) setTaskTypeOptions(list);
+          const models =
+            effectiveTaskType && access.modelsByTask?.[effectiveTaskType]
+              ? access.modelsByTask[effectiveTaskType]!
+              : Object.values(access.modelsByTask ?? {}).flat();
+          if (models.length > 0) {
+            setModelOptions(models);
+            if (!models.includes(model)) setModel(models[0]!);
+          }
+        } else if (Array.isArray(data)) {
+          const list = data.filter((x) => typeof x === "string");
+          if (list.length > 0) {
+            setModelOptions(list);
+            if (!list.includes(model)) setModel(list[0]!);
+          }
         }
       } catch {
         // ignore
       }
     })();
-    // model is intentionally included so we can keep the selected value valid.
-  }, [standaloneBase, ctx.apiKey, model]);
+  }, [standaloneBase, ctx.apiKey, model, effectiveTaskType]);
 
   const applyGeneratedTemplate = () => {
     const obj: Record<string, string> = {};
@@ -871,7 +868,7 @@ function SnippetBlocks({
                   onClick={() => setActiveLang(id as SnippetTabId)}
                 >
                   {SNIPPET_TAB_LABELS[id as SnippetTabId]}
-                  <span className="sr-only"> — {title}</span>
+                  <span className="sr-only">   {title}</span>
                 </button>
               );
             })}

@@ -10,7 +10,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
   return {
     name: config.appName,
     short_name: config.appName,
-    description: `${config.appName} — AI chatbot platform with dashboard, docs, and API access.`,
+    description: `${config.appName}   AI chatbot platform with dashboard, docs, and API access.`,
     start_url: "/",
     display: "standalone",
     background_color: "#fafafa",

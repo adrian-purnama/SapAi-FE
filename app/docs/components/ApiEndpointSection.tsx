@@ -15,7 +15,7 @@ type Props = {
   /** e.g. "Public", "API key", "Embed token" */
   authLabel?: string;
   description: ReactNode;
-  /** Interactive panel — configure fields, Run request, live response. */
+  /** Interactive panel   configure fields, Run request, live response. */
   tryIt: ReactNode;
   exampleRequests?: ApiDocExample[];
   exampleResponses?: ApiDocExample[];
@@ -69,7 +69,7 @@ export function ApiEndpointSection({
         <DocsSubsection
           variant="secondary"
           title="Example payloads"
-          description="Reference shapes — your live response may differ (ids, timestamps, plan limits)."
+          description="Reference shapes   your live response may differ (ids, timestamps, plan limits)."
         >
           {exampleRequests.length > 0 ? (
             <div className="space-y-3">

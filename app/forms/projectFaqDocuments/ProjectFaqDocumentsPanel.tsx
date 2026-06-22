@@ -350,7 +350,7 @@ export function ProjectFaqDocumentsPanel({ apiKeyId, disabled = false }: Props) 
                 </div>
                 <span className="shrink-0 text-xs tabular-nums text-zinc-500">{formatFaqFileSize(doc.length)}</span>
                 <span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-400">
-                  {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : "—"}
+                  {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : " "}
                 </span>
                 <span className="ml-auto flex shrink-0 flex-wrap items-center gap-1">
                   <button

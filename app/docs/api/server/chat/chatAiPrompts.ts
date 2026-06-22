@@ -5,18 +5,18 @@ API overview:
 - Auth: header x-api-key with my API key
 - Content-Type: application/json on POST
 
-Step 1 — enqueue a chat job
+Step 1   enqueue a chat job
 POST /api/v1/chat
 Body example:
 {
   "taskType": "chat",
-  "model": "OCT3Q",
+  "model": "<modelLabel>",
   "input": [{ "role": "user", "content": "Hello!" }],
   "maxTokens": 500
 }
 Response: { "ok": true, "job": { "id": "...", "status": "pending", ... } }
 
-Step 2 — poll for the answer (same job id for all task types)
+Step 2   poll for the answer (same job id for all task types)
 GET /api/v1/chat/jobs/{job.id}
 Header: x-api-key
 Poll until status is completed_partial or completed_full.
@@ -33,18 +33,18 @@ API overview:
 - Auth: x-api-key header
 - I have already uploaded Markdown FAQ files in the SapAi dashboard for this API key's project
 
-Step 1 — enqueue a RAG job
+Step 1   enqueue a RAG job
 POST /api/v1/chat
 Body example:
 {
   "taskType": "rag",
-  "model": "OCT3Q",
+  "model": "<modelLabel>",
   "input": [{ "role": "user", "content": "What is the refund policy?" }],
   "maxTokens": 500
 }
 Response includes job.id
 
-Step 2 — poll the same job endpoint as chat
+Step 2   poll the same job endpoint as chat
 GET /api/v1/chat/jobs/{job.id}
 Poll until completed. RAG jobs may include ragAnalysis in the response when ready.
 Answer text is in result.text.
@@ -56,9 +56,9 @@ export const TRANSLATE_AI_PROMPT = `Help me integrate the SapAi standalone API f
 API overview:
 - Base URL: configure in SapAi docs API settings
 - Auth: x-api-key header
-- No model field — server uses OLLAMA_TRANSLATE_MODEL
+- No model field   server uses OLLAMA_TRANSLATE_MODEL
 
-Step 1 — enqueue translate job
+Step 1   enqueue translate job
 POST /api/v1/chat
 Body example:
 {
@@ -72,7 +72,7 @@ Body example:
 }
 Response includes job.id
 
-Step 2 — poll for result
+Step 2   poll for result
 GET /api/v1/chat/jobs/{job.id}
 Poll until status is completed_partial or completed_full.
 Translated text is in result.text.
@@ -89,7 +89,7 @@ Header: x-api-key
 Repeat until status is completed_partial, completed_full, or failed.
 Fields: status, result.text, error, taskType, ragAnalysis (for RAG)
 
-Stream (WebSocket) — optional instead of polling:
+Stream (WebSocket)   optional instead of polling:
 wss://YOUR_HOST/api/v1/chat/jobs/{JOB_ID}/stream?apiKey=YOUR_API_KEY
 Or for embed: ?embedToken=YOUR_EMBED_TOKEN
 First message matches GET job shape; updates as the job runs.

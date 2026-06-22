@@ -7,7 +7,7 @@ import { SapAiSiteEmbed } from "@/app/components/SapAiSiteEmbed";
 import { SapAiProvider } from "@/app/providers/sapai-provider";
 import "./globals.css";
 
-// NEXT_PUBLIC_SITE_EMBED_DEFAULT_OPEN=false — widget starts closed (FAB only); iframe stays mounted when hidden.
+// NEXT_PUBLIC_SITE_EMBED_DEFAULT_OPEN=false   widget starts closed (FAB only); iframe stays mounted when hidden.
 const SITE_EMBED_IFRAME_SRC =
   process.env.NEXT_PUBLIC_SITE_EMBED_IFRAME_SRC?.trim() ||
   "https://sapai.amfphub.com/embed/t/et_64546b4a0e4a03918a354a72b90076bf21d5bcf0b7dc7122";

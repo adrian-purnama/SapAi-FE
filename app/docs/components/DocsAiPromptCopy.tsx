@@ -34,7 +34,7 @@ export function DocsAiPromptCopy({
         <div className="min-w-0 flex-1">
           <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-violet-950">
             <Sparkles className="h-4 w-4 shrink-0 text-violet-700" aria-hidden />
-            Skip reading — paste into your AI assistant
+            Skip reading   paste into your AI assistant
           </p>
           <p className="mt-1 text-sm leading-relaxed text-violet-950/80">
             Copies a ready-made instruction so ChatGPT, Claude, or Cursor can write the integration for you.

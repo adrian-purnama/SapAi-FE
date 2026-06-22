@@ -161,7 +161,7 @@ export default function DashboardPage() {
       const apiKey = String(payload?.data?.apiKey ?? "");
       setCreatedApiKey(apiKey);
       setModalOpen(true);
-      toastSuccess("Project key created. Copy it now — it is only shown once.", { id: "dashboard-create-key" });
+      toastSuccess("Project key created. Copy it now   it is only shown once.", { id: "dashboard-create-key" });
       await loadKeys();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to create API key.";
@@ -191,7 +191,7 @@ export default function DashboardPage() {
         </p>
         {/* <p className="mt-2 max-w-2xl text-zinc-600">
           Signed in as{" "}
-          <span className="font-medium text-zinc-800">{user?.email ?? "—"}</span>
+          <span className="font-medium text-zinc-800">{user?.email ?? " "}</span>
           {user?.isAdmin ? (
             <span className="ml-2 rounded-md bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800">
               Admin
@@ -203,9 +203,9 @@ export default function DashboardPage() {
 
       {/* <div className="grid gap-4 sm:grid-cols-3">
         {[
-          { label: "Projects", value: "—", hint: "Wire to your API" },
-          { label: "Tasks", value: "—", hint: "Placeholder metric" },
-          { label: "Activity", value: "—", hint: "Placeholder metric" },
+          { label: "Projects", value: " ", hint: "Wire to your API" },
+          { label: "Tasks", value: " ", hint: "Placeholder metric" },
+          { label: "Activity", value: " ", hint: "Placeholder metric" },
         ].map((card) => (
           <div
             key={card.label}
@@ -330,7 +330,7 @@ export default function DashboardPage() {
                           · {k.stats.totalTokens.toLocaleString()} tokens · last job{" "}
                           {k.stats.lastJobAt
                             ? new Date(k.stats.lastJobAt).toLocaleString()
-                            : "—"}
+                            : " "}
                         </>
                       ) : null}
                     </div>

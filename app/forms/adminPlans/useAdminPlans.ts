@@ -6,7 +6,7 @@ import { useSapAi } from "@/app/providers/sapai-provider";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { joinServerApiPath } from "@/lib/server-api";
 
-import type { AdminPlan, AdminPlanInput } from "./types";
+import type { AdminPlan, AdminPlanInput, TaskCatalogEntry } from "./types";
 import { inputToCreateBody, inputToPatchBody } from "./types";
 
 type ApiOk<T> = { success: true; data: T; error: null };
@@ -23,6 +23,7 @@ async function parseApi<T>(res: Response): Promise<T> {
 export function useAdminPlans() {
   const { token } = useSapAi();
   const [plans, setPlans] = useState<AdminPlan[]>([]);
+  const [taskCatalog, setTaskCatalog] = useState<TaskCatalogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -37,9 +38,14 @@ export function useAdminPlans() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(joinServerApiPath("/api/v1/admin/plans"), { headers: authHeaders });
-      const data = await parseApi<{ plans: AdminPlan[] }>(res);
+      const [plansRes, catalogRes] = await Promise.all([
+        fetch(joinServerApiPath("/api/v1/admin/plans"), { headers: authHeaders }),
+        fetch(joinServerApiPath("/api/v1/admin/task-catalog"), { headers: authHeaders }),
+      ]);
+      const data = await parseApi<{ plans: AdminPlan[] }>(plansRes);
+      const catalogData = await parseApi<{ catalog: TaskCatalogEntry[] }>(catalogRes);
       setPlans(data.plans);
+      setTaskCatalog(catalogData.catalog);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to load plans.";
       setError(msg);
@@ -117,6 +123,7 @@ export function useAdminPlans() {
 
   return {
     plans,
+    taskCatalog,
     loading,
     saving,
     error,
