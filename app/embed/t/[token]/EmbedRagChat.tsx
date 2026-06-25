@@ -7,6 +7,7 @@ import type { Components } from "react-markdown";
 import { AlertCircle, Bot, ExternalLink, Loader2, MessageCircle, Send, Sparkles, X } from "lucide-react";
 
 import { loadEmbedChatMessages, saveEmbedChatMessages } from "@/lib/embed-chat-storage";
+import { resolveEmbedAccent } from "@/lib/embed-accent";
 import { DEFAULT_EMBED_AI_DISCLAIMER } from "@/lib/embed-disclaimer";
 import {
   isEmbedLivePreview,
@@ -45,8 +46,6 @@ type Props = {
   branding: EmbedPublicBranding | null;
 };
 
-const HEX_EMBED = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
-
 const EMBED_WAIT_MESSAGES = [
   "Thinking…",
   "Reading your docs…",
@@ -58,11 +57,6 @@ const EMBED_WAIT_MESSAGES = [
 ] as const;
 
 const WAIT_MESSAGE_MS = 2800;
-
-function resolveAccent(embedColor: string | null | undefined): string {
-  const t = embedColor?.trim() ?? "";
-  return t && HEX_EMBED.test(t) ? t : "#18181b";
-}
 
 function tryPrettyJsonBlock(s: string): string | null {
   const t = s.trim();
@@ -182,7 +176,7 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
   const greetingInjectedRef = useRef(false);
   const storageTokenRef = useRef(token);
 
-  const accent = resolveAccent(branding?.embedColor ?? null);
+  const accent = resolveEmbedAccent(branding?.embedColor ?? null);
   const displayName = branding?.assistantName?.trim() ? branding.assistantName.trim() : "Assistant";
   const profileUrl = branding?.assistantProfileUrl?.trim() || null;
   const profileDescription = branding?.assistantDescription?.trim() || null;
@@ -192,17 +186,13 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
 
   const compact = isEmbedded;
   const recaptchaNotice = isRecaptchaEnabledOnClient();
-  const showDisclaimerText = Boolean(disclaimerText || furtherInfoLink);
+  const showFooterNote = Boolean(appBadge || disclaimerText || furtherInfoLink);
 
   useEffect(() => {
     setIsEmbedded(isInEmbedIframe());
     setParentControlledClose(isParentControlledEmbedClose());
     setLivePreviewEmbed(isEmbedLivePreview());
   }, []);
-
-  useEffect(() => {
-    if (parentControlledClose) setPanelOpen(true);
-  }, [parentControlledClose]);
 
   useLayoutEffect(() => {
     storageTokenRef.current = token;
@@ -309,10 +299,10 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
     >
       <div
         className={cn(
-          styles.shell,
-          "flex min-h-0 flex-1 flex-col overflow-hidden border border-zinc-200/80 bg-white",
+          "relative flex min-h-0 flex-1 flex-col overflow-hidden border border-zinc-200/80 bg-white",
           compact ? cn("h-full", styles.shellCompact) : styles.shellStandalone,
         )}
+        style={{ ["--embed-accent" as string]: accent }}
         role="region"
         aria-label={`${displayName} chat`}
       >
@@ -365,16 +355,6 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
               <p className={cn("truncate font-semibold text-zinc-900", compact ? "text-xs" : "text-sm")}>
                 {displayName}
               </p>
-              {appBadge ? (
-                <p
-                  className={cn(
-                    "mt-0.5 truncate font-medium text-zinc-600",
-                    compact ? "text-[9px] leading-tight" : "text-[10px] leading-snug",
-                  )}
-                >
-                  {appBadge.label}
-                </p>
-              ) : null}
             </div>
           </div>
           {showProfileInfo && profileDescription ? (
@@ -521,62 +501,63 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
 
         <div
           className={cn(
-            "shrink-0 border-t border-zinc-200/80 bg-white/95 backdrop-blur-sm",
+            "relative shrink-0 border-t border-zinc-200/80 bg-white/95 backdrop-blur-sm",
             compact ? "px-2.5 pt-2 pb-2" : "px-3.5 pt-2.5 pb-3",
           )}
         >
-          {showDisclaimerText ? (
-            <p
+          {showFooterNote || recaptchaNotice ? (
+            <div
               className={cn(
-                "text-center leading-snug text-zinc-400",
-                recaptchaNotice ? "mb-1" : "mb-2",
+                "mb-1.5 flex flex-col items-center justify-center gap-0.5 text-center leading-tight",
                 compact ? "text-[9px]" : "text-[10px]",
               )}
-              role="note"
             >
-              {disclaimerText}
-              {furtherInfoLink ? (
-                <>
-                  {" "}
+              {showFooterNote ? (
+                <p role="note" className="flex items-center justify-center">
+                  {appBadge ? (
+                    <span className={styles.appBadge}>{appBadge.label}</span>
+                  ) : (
+                    <span className="text-zinc-400">{disclaimerText}</span>
+                  )}
+                  {furtherInfoLink ? (
+                    <>
+                      {" · "}
+                      <a
+                        href={furtherInfoLink.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-sky-700 underline underline-offset-2 hover:text-sky-800"
+                      >
+                        {furtherInfoLink.label}
+                      </a>
+                    </>
+                  ) : null}
+                </p>
+              ) : null}
+              {recaptchaNotice ? (
+                <p className="text-zinc-400">
+                  Protected by reCAPTCHA. Google{" "}
                   <a
-                    href={furtherInfoLink.url}
+                    href="https://policies.google.com/privacy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium text-sky-700 underline underline-offset-2 hover:text-sky-800"
+                    className="underline underline-offset-2 hover:text-zinc-600"
                   >
-                    {furtherInfoLink.label}
-                  </a>
-                </>
+                    Privacy
+                  </a>{" "}
+                  and{" "}
+                  <a
+                    href="https://policies.google.com/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 hover:text-zinc-600"
+                  >
+                    Terms
+                  </a>{" "}
+                  apply.
+                </p>
               ) : null}
-            </p>
-          ) : null}
-          {recaptchaNotice ? (
-            <p
-              className={cn(
-                "mb-2 text-center leading-snug text-zinc-400",
-                compact ? "text-[7.5px]" : "text-[8.5px]",
-              )}
-            >
-              Protected by reCAPTCHA. Google{" "}
-              <a
-                href="https://policies.google.com/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-2 hover:text-zinc-600"
-              >
-                Privacy
-              </a>{" "}
-              and{" "}
-              <a
-                href="https://policies.google.com/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline underline-offset-2 hover:text-zinc-600"
-              >
-                Terms
-              </a>{" "}
-              apply.
-            </p>
+            </div>
           ) : null}
           <form
             id={formId}

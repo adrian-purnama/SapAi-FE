@@ -82,17 +82,36 @@ export function isSapAiEmbedMessage(data: unknown): data is SapAiEmbedMessage {
   );
 }
 
-/** Listener script for host pages that paste the iframe snippet (hides/shows the iframe). */
-export function buildEmbedHostListenerScript(iframeId = "sapai-embed-widget"): string {
+export const EMBED_LAUNCHER_ID = "sapai-embed-launcher";
+
+/** Listener script for host pages that paste the iframe snippet (launcher + hide/show iframe). */
+export function buildEmbedHostListenerScript(
+  iframeId = "sapai-embed-widget",
+  launcherId = EMBED_LAUNCHER_ID,
+): string {
   return `<script>
 (function () {
   var iframe = document.getElementById(${JSON.stringify(iframeId)});
+  var launcher = document.getElementById(${JSON.stringify(launcherId)});
   if (!iframe) return;
+  function show() {
+    iframe.style.display = "";
+    if (launcher) launcher.style.display = "none";
+  }
+  function hide() {
+    iframe.style.display = "none";
+    if (launcher) launcher.style.display = "";
+  }
+  if (launcher) {
+    launcher.addEventListener("click", show);
+    hide();
+  }
   window.addEventListener("message", function (e) {
     var d = e.data;
     if (!d || d.type !== ${JSON.stringify(SAPAI_EMBED_MESSAGE_TYPE)}) return;
-    if (d.action === "close") iframe.style.display = "none";
-    if (d.action === "open") iframe.style.display = "";
+    if (iframe.contentWindow && e.source !== iframe.contentWindow) return;
+    if (d.action === "close") hide();
+    if (d.action === "open") show();
   });
 })();
 </script>`;
