@@ -4,9 +4,21 @@ import { useState } from "react";
 import { Layers, Pencil, Plus, RefreshCw, X } from "lucide-react";
 
 import AdminPlanForm from "./AdminPlanForm";
-import { EMPTY_PLAN_INPUT, planToInput, taskAccessFromCatalog, type AdminPlan, type AdminPlanInput } from "./types";
+import { EMPTY_PLAN_INPUT, planToInput, taskAccessFromCatalog, type AdminPlan, type AdminPlanImageState, type AdminPlanInput } from "./types";
 import { useAdminPlans } from "./useAdminPlans";
 import styles from "./AdminPlansPanel.module.css";
+import { joinServerApiPath } from "@/lib/server-api";
+
+const EMPTY_IMAGE_STATE: AdminPlanImageState = {
+  imageFile: null,
+  removeImage: false,
+  imagePreviewUrl: null,
+};
+
+function planImagePreviewUrl(plan: AdminPlan): string | null {
+  if (!plan.imageFileId) return null;
+  return joinServerApiPath(`/api/v1/files/${plan.imageFileId}`);
+}
 
 function formatRateLimit(n: number) {
   return n === 0 ? "∞ req/min" : `${n} req/min`;
@@ -77,6 +89,9 @@ function PlanCard({
         {plan.isPriority ? (
           <span className={`${styles.badge} ${styles.badgePriority}`}>Priority</span>
         ) : null}
+        {plan.showOnPricingPage ? (
+          <span className={`${styles.badge} ${styles.badgeDefault}`}>Pricing</span>
+        ) : null}
       </div>
     </button>
   );
@@ -89,10 +104,12 @@ export default function AdminPlansPanel() {
   const [editorMode, setEditorMode] = useState<"none" | "create" | "edit">("none");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<AdminPlanInput>(EMPTY_PLAN_INPUT);
+  const [imageState, setImageState] = useState<AdminPlanImageState>(EMPTY_IMAGE_STATE);
 
   function openCreate() {
     setEditorMode("create");
     setEditingId(null);
+    setImageState(EMPTY_IMAGE_STATE);
     setDraft({
       ...EMPTY_PLAN_INPUT,
       taskAccess: taskAccessFromCatalog(taskCatalog),
@@ -103,20 +120,26 @@ export default function AdminPlansPanel() {
     setEditorMode("edit");
     setEditingId(plan.id);
     setDraft(planToInput(plan));
+    setImageState({
+      imageFile: null,
+      removeImage: false,
+      imagePreviewUrl: planImagePreviewUrl(plan),
+    });
   }
 
   function closeEditor() {
     setEditorMode("none");
     setEditingId(null);
     setDraft(EMPTY_PLAN_INPUT);
+    setImageState(EMPTY_IMAGE_STATE);
   }
 
   async function handleSubmit() {
     if (editorMode === "create") {
-      await createPlan(draft);
+      await createPlan(draft, imageState);
       closeEditor();
     } else if (editorMode === "edit" && editingId) {
-      await updatePlan(editingId, draft);
+      await updatePlan(editingId, draft, imageState);
       closeEditor();
     }
   }
@@ -218,6 +241,8 @@ export default function AdminPlansPanel() {
                 <AdminPlanForm
                   mode={editorMode}
                   value={draft}
+                  image={imageState}
+                  onImageChange={setImageState}
                   catalog={taskCatalog}
                   onChange={setDraft}
                   saving={saving}

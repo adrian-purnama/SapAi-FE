@@ -33,7 +33,7 @@ function toDateInputValue(iso: string | null | undefined): string {
 }
 
 export default function AdminUserDetailsPanel({ userId }: { userId: string }) {
-  const { user, loading, error, refetch, hasAuth } = useAdminUser(userId);
+  const { user, planHistory, loading, error, refetch, hasAuth } = useAdminUser(userId);
   const { patchUser, sendPasswordReset, setPassword } = useAdminUsers();
   const { plans, loading: plansLoading } = useAdminPlans();
 
@@ -330,6 +330,28 @@ export default function AdminUserDetailsPanel({ userId }: { userId: string }) {
                 </button>
               </div>
             </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+            <h3 className="text-sm font-semibold text-zinc-900">Plan history</h3>
+            <p className="mt-1 text-xs text-zinc-600">Assignments, expirations, and automatic downgrades.</p>
+            {planHistory.length === 0 ? (
+              <p className="mt-4 text-sm text-zinc-500">No plan changes recorded yet.</p>
+            ) : (
+              <ul className="mt-4 space-y-3">
+                {planHistory.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="rounded-xl border border-zinc-100 bg-zinc-50/60 px-4 py-3 text-sm text-zinc-800"
+                  >
+                    <p className="font-medium text-zinc-900">{entry.label}</p>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {new Date(entry.occurredAt).toLocaleString()} · {entry.actor === "admin" ? "Admin" : "System"}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 

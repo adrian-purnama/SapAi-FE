@@ -2,12 +2,14 @@
 
 import type { FormEvent } from "react";
 
-import type { AdminPlanInput, TaskCatalogEntry } from "./types";
+import type { AdminPlanInput, AdminPlanImageState, TaskCatalogEntry } from "./types";
 import styles from "./AdminPlanForm.module.css";
 
 type Props = {
   mode: "create" | "edit";
   value: AdminPlanInput;
+  image: AdminPlanImageState;
+  onImageChange: (next: AdminPlanImageState) => void;
   catalog: TaskCatalogEntry[];
   onChange: (next: AdminPlanInput) => void;
   saving: boolean;
@@ -74,6 +76,8 @@ function NumField({
 export default function AdminPlanForm({
   mode,
   value,
+  image,
+  onImageChange,
   catalog,
   onChange,
   saving,
@@ -106,6 +110,27 @@ export default function AdminPlanForm({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     await onSubmit();
+  }
+
+  function onImageChosen(e: FormEvent<HTMLInputElement>) {
+    const input = e.currentTarget;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+    onImageChange({
+      imageFile: file,
+      removeImage: false,
+      imagePreviewUrl: URL.createObjectURL(file),
+    });
+  }
+
+  function clearImage() {
+    onImageChange({
+      imageFile: null,
+      removeImage: true,
+      imagePreviewUrl: null,
+    });
   }
 
   const title =
@@ -204,7 +229,64 @@ export default function AdminPlanForm({
                 className={styles.input}
               />
             </label>
+            <label className={styles.label}>
+              <span className={styles.labelText}>Midtrans gross amount (IDR)</span>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={value.midtransGrossAmount}
+                onChange={(e) =>
+                  patch("midtransGrossAmount", e.target.value === "" ? "" : Number(e.target.value))
+                }
+                placeholder="150000"
+                className={styles.input}
+              />
+              <span className={styles.fieldHint}>Whole rupiah for Snap `gross_amount`. Leave empty if free.</span>
+            </label>
+            <label className={styles.label}>
+              <span className={styles.labelText}>Accent color</span>
+              <input
+                value={value.accentColor}
+                onChange={(e) => patch("accentColor", e.target.value)}
+                placeholder="#7c3aed"
+                pattern="^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+                className={`${styles.input} ${styles.inputMono}`}
+              />
+            </label>
+            <div className={`${styles.label} ${styles.fieldGridWide}`}>
+              <span className={styles.labelText}>Pricing image</span>
+              <div className="flex flex-wrap items-center gap-3">
+                {image.imagePreviewUrl ? (
+                  <img
+                    src={image.imagePreviewUrl}
+                    alt=""
+                    className="h-16 w-auto rounded-lg border border-zinc-200 object-contain"
+                  />
+                ) : null}
+                <label className={styles.secondaryBtn}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={onImageChosen}
+                  />
+                  Choose image
+                </label>
+                {image.imagePreviewUrl ? (
+                  <button type="button" onClick={clearImage} className={styles.secondaryBtn}>
+                    Remove
+                  </button>
+                ) : null}
+              </div>
+            </div>
           </div>
+          <ToggleRow
+            label="Show on pricing page"
+            checked={value.showOnPricingPage}
+            onChange={(v) => patch("showOnPricingPage", v)}
+            hint="Only active plans with this on appear on /pricing."
+          />
         </section>
 
         <section className={styles.section} aria-labelledby="plan-flags">

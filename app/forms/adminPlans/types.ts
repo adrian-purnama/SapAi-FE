@@ -20,6 +20,10 @@ export type AdminPlan = {
   ragAnalyticsEnabled: boolean;
   priceLabel: string | null;
   priceNote: string | null;
+  showOnPricingPage: boolean;
+  imageFileId: string | null;
+  accentColor: string | null;
+  midtrans: { grossAmount: number | null };
   taskAccess: Record<string, string[]>;
   createdAt: string | null;
   updatedAt: string | null;
@@ -52,7 +56,16 @@ export type AdminPlanInput = {
   ragAnalyticsEnabled: boolean;
   priceLabel: string;
   priceNote: string;
+  showOnPricingPage: boolean;
+  accentColor: string;
+  midtransGrossAmount: number | "";
   taskAccess: Record<string, string[]>;
+};
+
+export type AdminPlanImageState = {
+  imageFile: File | null;
+  removeImage: boolean;
+  imagePreviewUrl: string | null;
 };
 
 export function taskAccessFromCatalog(catalog: TaskCatalogEntry[]): Record<string, string[]> {
@@ -80,6 +93,9 @@ export const EMPTY_PLAN_INPUT: AdminPlanInput = {
   ragAnalyticsEnabled: false,
   priceLabel: "",
   priceNote: "",
+  showOnPricingPage: false,
+  accentColor: "",
+  midtransGrossAmount: "",
   taskAccess: {},
 };
 
@@ -105,6 +121,9 @@ export function planToInput(plan: AdminPlan): AdminPlanInput {
     ragAnalyticsEnabled: plan.ragAnalyticsEnabled,
     priceLabel: plan.priceLabel ?? "",
     priceNote: plan.priceNote ?? "",
+    showOnPricingPage: plan.showOnPricingPage,
+    accentColor: plan.accentColor ?? "",
+    midtransGrossAmount: plan.midtrans.grossAmount ?? "",
     taskAccess: { ...plan.taskAccess },
   };
 }
@@ -131,6 +150,14 @@ export function inputToCreateBody(input: AdminPlanInput) {
     ragAnalyticsEnabled: input.ragAnalyticsEnabled,
     priceLabel: input.priceLabel.trim() || null,
     priceNote: input.priceNote.trim() || null,
+    showOnPricingPage: input.showOnPricingPage,
+    accentColor: input.accentColor.trim() || null,
+    midtrans: {
+      grossAmount:
+        input.midtransGrossAmount === "" || input.midtransGrossAmount == null
+          ? null
+          : Math.max(0, Math.round(Number(input.midtransGrossAmount))),
+    },
     taskAccess: input.taskAccess,
   };
 }

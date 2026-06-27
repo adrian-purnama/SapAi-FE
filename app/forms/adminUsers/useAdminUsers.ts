@@ -16,6 +16,19 @@ export type AdminUserEffectivePlan = {
   name: string;
 } | null;
 
+export type AdminUserPlanHistoryEntry = {
+  id: string;
+  kind: "assigned" | "expired" | "downgraded";
+  label: string;
+  planSlug: string;
+  planName: string;
+  planExpiresAt: string | null;
+  toPlanSlug: string | null;
+  toPlanName: string | null;
+  actor: "admin" | "system";
+  occurredAt: string;
+};
+
 export type AdminUserRow = {
   id: string;
   email: string;

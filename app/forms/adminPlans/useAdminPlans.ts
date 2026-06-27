@@ -6,7 +6,7 @@ import { useSapAi } from "@/app/providers/sapai-provider";
 import { toastError, toastSuccess } from "@/lib/app-toast";
 import { joinServerApiPath } from "@/lib/server-api";
 
-import type { AdminPlan, AdminPlanInput, TaskCatalogEntry } from "./types";
+import type { AdminPlan, AdminPlanInput, AdminPlanImageState, TaskCatalogEntry } from "./types";
 import { inputToCreateBody, inputToPatchBody } from "./types";
 
 type ApiOk<T> = { success: true; data: T; error: null };
@@ -59,7 +59,7 @@ export function useAdminPlans() {
     void load();
   }, [load]);
 
-  async function createPlan(input: AdminPlanInput) {
+  async function createPlan(input: AdminPlanInput, image?: AdminPlanImageState) {
     if (!authHeaders) return;
     setSaving(true);
     try {
@@ -68,7 +68,13 @@ export function useAdminPlans() {
         headers: authHeaders,
         body: JSON.stringify(inputToCreateBody(input)),
       });
-      await parseApi<{ plan: AdminPlan }>(res);
+      const data = await parseApi<{ plan: AdminPlan }>(res);
+      const planId = data.plan.id;
+
+      if (image?.imageFile) {
+        await uploadPlanImage(planId, image.imageFile);
+      }
+
       toastSuccess("Plan created.", { id: "admin-plans-save" });
       await load();
     } catch (e) {
@@ -80,7 +86,28 @@ export function useAdminPlans() {
     }
   }
 
-  async function updatePlan(id: string, input: AdminPlanInput) {
+  async function uploadPlanImage(planId: string, file: File) {
+    if (!token) return;
+    const formData = new FormData();
+    formData.set("image", file);
+    const res = await fetch(joinServerApiPath(`/api/v1/admin/plans/${encodeURIComponent(planId)}/image`), {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    await parseApi<{ plan: AdminPlan }>(res);
+  }
+
+  async function clearPlanImage(planId: string) {
+    if (!authHeaders) return;
+    const res = await fetch(joinServerApiPath(`/api/v1/admin/plans/${encodeURIComponent(planId)}/image`), {
+      method: "DELETE",
+      headers: authHeaders,
+    });
+    await parseApi<{ plan: AdminPlan }>(res);
+  }
+
+  async function updatePlan(id: string, input: AdminPlanInput, image?: AdminPlanImageState) {
     if (!authHeaders) return;
     setSaving(true);
     try {
@@ -90,6 +117,13 @@ export function useAdminPlans() {
         body: JSON.stringify(inputToPatchBody(input)),
       });
       await parseApi<{ plan: AdminPlan }>(res);
+
+      if (image?.removeImage) {
+        await clearPlanImage(id);
+      } else if (image?.imageFile) {
+        await uploadPlanImage(id, image.imageFile);
+      }
+
       toastSuccess("Plan updated.", { id: "admin-plans-save" });
       await load();
     } catch (e) {
