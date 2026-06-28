@@ -3,6 +3,7 @@
 export type UserPlan = {
   slug: string;
   name: string;
+  accentColor: string | null;
   analyticsRetentionDays: number;
   ragAnalyticsEnabled: boolean;
   isAutoEmbed: boolean;
@@ -21,6 +22,8 @@ export type AuthUser = {
   isEmailVerified: boolean;
   /** Resolved subscription plan from the server; null if none assigned. */
   plan: UserPlan | null;
+  /** ISO date when the assigned non-default plan expires; null if none or never. */
+  planExpiresAt: string | null;
 };
 
 export function parseUserPlan(raw: unknown): UserPlan | null {
@@ -31,6 +34,7 @@ export function parseUserPlan(raw: unknown): UserPlan | null {
   return {
     slug,
     name: typeof o.name === "string" ? o.name : slug,
+    accentColor: typeof o.accentColor === "string" ? o.accentColor.trim() || null : null,
     analyticsRetentionDays:
       typeof o.analyticsRetentionDays === "number" && Number.isFinite(o.analyticsRetentionDays)
         ? o.analyticsRetentionDays
@@ -59,12 +63,18 @@ export function parseAuthUserPayload(raw: unknown): AuthUser | null {
   const id = typeof o.id === "string" ? o.id : "";
   const email = typeof o.email === "string" ? o.email : "";
   if (!id || !email) return null;
+  const planExpiresAtRaw = o.planExpiresAt;
+  const planExpiresAt =
+    typeof planExpiresAtRaw === "string" && planExpiresAtRaw.trim()
+      ? planExpiresAtRaw.trim()
+      : null;
   return {
     id,
     email,
     isAdmin: Boolean(o.isAdmin),
     isEmailVerified: Boolean(o.isEmailVerified),
     plan: parseUserPlan(o.plan),
+    planExpiresAt,
   };
 }
 

@@ -147,6 +147,8 @@ export default function Navbar() {
 
   const brandName = appConfig?.appName?.trim() || "SapAi";
   const logoUrl = appConfig?.brandLogoUrl;
+  const planAccent = user?.plan?.accentColor?.trim() || "#18181b";
+  const planLabel = user?.plan?.name ?? "Free";
   const [mobileOpen, setMobileOpen] = useState(false);
 
   /* Light chrome everywhere   landing matches interior for cohesion */
@@ -239,9 +241,13 @@ export default function Navbar() {
               <Link
                 href="/account"
                 className="ml-0.5 flex max-w-44 items-center gap-1.5 rounded-full border border-zinc-200 bg-white py-1 pl-1 pr-2 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-400/40 sm:max-w-56 sm:gap-2 sm:pr-2.5"
-                title={user.email}
+                title={`${user.email} · ${planLabel} plan`}
               >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black text-[11px] font-bold text-white shadow-sm">
+                <span
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-sm ring-1 ring-black/10"
+                  style={{ backgroundColor: planAccent }}
+                  aria-label={`${planLabel} plan`}
+                >
                   {initialsFromEmail(user.email)}
                 </span>
                 <span className="hidden min-w-0 flex-1 truncate text-xs font-medium text-zinc-700 sm:inline">
