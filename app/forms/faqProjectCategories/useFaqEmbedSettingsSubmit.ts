@@ -55,6 +55,9 @@ function parseEmbedFromPayload(raw: unknown): FaqEmbedPublicFlags {
       appBadgeEnabled: null,
       appBadgeLabel: null,
       aiDisclaimerEditable: false,
+      ragTone: null,
+      ragGuardrails: null,
+      ragPromptEditable: false,
     };
   }
   const o = raw as Record<string, unknown>;
@@ -83,6 +86,9 @@ function parseEmbedFromPayload(raw: unknown): FaqEmbedPublicFlags {
     appBadgeEnabled: typeof o.appBadgeEnabled === "boolean" ? o.appBadgeEnabled : null,
     appBadgeLabel: nilStr(o.appBadgeLabel),
     aiDisclaimerEditable: Boolean(o.aiDisclaimerEditable),
+    ragTone: nilStr(o.ragTone),
+    ragGuardrails: nilStr(o.ragGuardrails),
+    ragPromptEditable: Boolean(o.ragPromptEditable),
   };
 }
 
@@ -97,6 +103,8 @@ export type PatchEmbedUiBody = {
   furtherInfoLink?: { label: string | null; url: string | null } | null;
   appBadge?: { enabled: boolean; label: string | null } | null;
   clearAssistantAvatar?: boolean;
+  ragTone?: string | null;
+  ragGuardrails?: string | null;
 };
 
 export function useFaqEmbedSettingsSubmit(apiKeyId: string) {

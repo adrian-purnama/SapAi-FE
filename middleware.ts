@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { getServerApiBaseUrl } from "@/lib/server-api";
+
 const EMBED_PREFIX = "/embed/t/";
 
 function extractEmbedTokenFromPath(pathname: string): string | null {
@@ -24,7 +26,7 @@ export async function middleware(request: NextRequest) {
   const token = extractEmbedTokenFromPath(pathname);
   let csp = "frame-ancestors 'none'";
   if (token) {
-    const base = (process.env.NEXT_PUBLIC_STANDALONE_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
+    const base = getServerApiBaseUrl();
     try {
       const res = await fetch(`${base}/api/v1/embed/frame-policy?token=${encodeURIComponent(token)}`, {
         cache: "no-store",

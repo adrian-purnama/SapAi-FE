@@ -6,9 +6,9 @@ import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
 import { AlertCircle, Bot, ExternalLink, Loader2, MessageCircle, Send, Sparkles, X } from "lucide-react";
 
-import { loadEmbedChatMessages, saveEmbedChatMessages } from "@/lib/embed-chat-storage";
+import { clearEmbedChatMessages, loadEmbedChatMessages, saveEmbedChatMessages, clearEmbedSession, isEmbedSessionValid, loadEmbedSession, saveEmbedSession } from "@/lib/embedStorage";
 import { resolveEmbedAccent } from "@/lib/embed-accent";
-import { DEFAULT_EMBED_AI_DISCLAIMER } from "@/lib/embed-disclaimer";
+import { DEFAULT_EMBED_AI_DISCLAIMER } from "@/lib/embed-constants";
 import {
   isEmbedLivePreview,
   isInEmbedIframe,
@@ -18,6 +18,7 @@ import {
 
 import { useEmbedRagChat } from "@/app/forms/projectFaqDocuments/useEmbedRagChat";
 import { isRecaptchaEnabledOnClient } from "@/lib/recaptcha-client";
+import { createEmbedChatSession, endEmbedChatSession } from "@/lib/waitForRagJobAnswer";
 import { cn } from "@/lib/utils";
 
 import styles from "./EmbedRagChat.module.css";
@@ -175,6 +176,8 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
   const endRef = useRef<HTMLDivElement>(null);
   const greetingInjectedRef = useRef(false);
   const storageTokenRef = useRef(token);
+  const sessionIdRef = useRef<string | null>(null);
+  const sessionEnsureRef = useRef<Promise<string | null> | null>(null);
 
   const accent = resolveEmbedAccent(branding?.embedColor ?? null);
   const displayName = branding?.assistantName?.trim() ? branding.assistantName.trim() : "Assistant";
@@ -217,6 +220,56 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
     setMessages((m) => [...m, { id: crypto.randomUUID(), role: "assistant", content: g }]);
   }, [embedActive, branding?.assistantGreeting, chatHydrated]);
 
+  const ensureEmbedSession = useCallback(async (): Promise<string | null> => {
+    if (!embedActive) return null;
+    const inFlight = sessionEnsureRef.current;
+    if (inFlight) return inFlight;
+
+    const work = (async (): Promise<string | null> => {
+      const stored = loadEmbedSession(token);
+      if (isEmbedSessionValid(stored)) {
+        sessionIdRef.current = stored!.sessionId;
+        return stored!.sessionId;
+      }
+      try {
+        const created = await createEmbedChatSession(rag.baseUrl, token);
+        saveEmbedSession(token, { sessionId: created.id, expiresAt: created.expiresAt });
+        sessionIdRef.current = created.id;
+        return created.id;
+      } catch {
+        return null;
+      }
+    })();
+
+    sessionEnsureRef.current = work;
+    try {
+      return await work;
+    } finally {
+      if (sessionEnsureRef.current === work) sessionEnsureRef.current = null;
+    }
+  }, [embedActive, rag.baseUrl, token]);
+
+  const tearDownEmbedSession = useCallback(async () => {
+    const sid = sessionIdRef.current ?? loadEmbedSession(token)?.sessionId;
+    sessionIdRef.current = null;
+    clearEmbedSession(token);
+    clearEmbedChatMessages(token);
+    setMessages([]);
+    greetingInjectedRef.current = false;
+    if (sid) {
+      try {
+        await endEmbedChatSession(rag.baseUrl, token, sid);
+      } catch {
+        /* best-effort */
+      }
+    }
+  }, [rag.baseUrl, token]);
+
+  useEffect(() => {
+    if (!panelOpen || !embedActive || !chatHydrated || parentControlledClose) return;
+    void ensureEmbedSession();
+  }, [panelOpen, embedActive, chatHydrated, parentControlledClose, ensureEmbedSession]);
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, rag.running]);
@@ -237,8 +290,13 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
     if (!q || rag.running || !embedActive) return;
     setDraft("");
     setMessages((m) => [...m, { id: crypto.randomUUID(), role: "user", content: q }]);
-    const out = await rag.run(q);
+    const sid = sessionIdRef.current ?? (await ensureEmbedSession());
+    const out = await rag.run(q, sid ?? undefined);
     if (out.ok) {
+      if (out.session) {
+        saveEmbedSession(token, { sessionId: out.session.id, expiresAt: out.session.expiresAt });
+        sessionIdRef.current = out.session.id;
+      }
       setMessages((m) => [
         ...m,
         {
@@ -253,7 +311,7 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
         { id: crypto.randomUUID(), role: "assistant", content: out.message, isError: true },
       ]);
     }
-  }, [draft, rag, embedActive]);
+  }, [draft, rag, embedActive, ensureEmbedSession, token]);
 
   const openPanel = useCallback(() => {
     setPanelOpen(true);
@@ -261,13 +319,14 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
   }, []);
 
   const closePanel = useCallback(() => {
+    void tearDownEmbedSession();
     if (parentControlledClose) {
       postSapAiEmbedMessage("close");
       return;
     }
     setPanelOpen(false);
     if (!livePreviewEmbed) postSapAiEmbedMessage("close");
-  }, [parentControlledClose, livePreviewEmbed]);
+  }, [parentControlledClose, livePreviewEmbed, tearDownEmbedSession]);
 
   if (!panelOpen && !parentControlledClose) {
     return (
@@ -419,7 +478,7 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
                 {displayName}
               </p>
               <p className={cn("font-medium text-zinc-700", compact ? "text-xs" : "text-sm")}>
-                Ask your knowledge base
+                How can we help?
               </p>
               <p
                 className={cn(
@@ -427,9 +486,9 @@ export function EmbedRagChat({ token, embedActive, branding }: Props) {
                   compact ? "max-w-[220px] text-[11px]" : "max-w-[280px] text-xs",
                 )}
               >
-                Answers use your project&apos;s uploaded files.
+                Ask a question about our products, services, or anything else.
               </p>
-            </div>
+                          </div>
           ) : null}
 
           {messages.map((m) => (

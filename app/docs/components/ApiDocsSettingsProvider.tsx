@@ -10,14 +10,13 @@ import {
   type ReactNode,
 } from "react";
 
+import { getServerApiBaseUrl } from "@/lib/server-api";
+
 const STORAGE_BASE = "sapai_docs_standalone_base_url";
 const STORAGE_KEY = "sapai_docs_standalone_api_key";
 
 function readEnvDefaultBase(): string {
-  return (
-    (typeof process !== "undefined" && process.env.NEXT_PUBLIC_STANDALONE_API_URL?.trim()) ||
-    "http://localhost:8000"
-  );
+  return getServerApiBaseUrl();
 }
 
 export type ApiDocsSettingsContextValue = {

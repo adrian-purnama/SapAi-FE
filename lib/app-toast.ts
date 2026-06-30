@@ -31,11 +31,3 @@ export function toastError(message: string, opts?: ToastOpts): string {
     },
   });
 }
-
-export function toastLoading(message: string, id?: string): string {
-  return toast.loading(message, { id });
-}
-
-export function toastDismiss(toastId?: string): void {
-  toast.dismiss(toastId);
-}

@@ -24,10 +24,6 @@ export function getSiteOrigin(): string {
   return getSiteMetadataBase()?.origin ?? "http://localhost:3000";
 }
 
-export function getBrandIconUrl(config: Pick<AppPublicConfig, "brandLogoFileId" | "brandLogoUrl">): string {
-  return getBrandIconSourceUrl(config) ?? APP_ICON_PATH;
-}
-
 function getOpenGraphImageUrl(
   config: Pick<AppPublicConfig, "brandLogoFileId" | "brandLogoUrl">,
   metadataBase: URL | undefined,

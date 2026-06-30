@@ -23,6 +23,7 @@ export type DocsNavGroup = { group: string; items: DocsNavItem[] };
 export const CHAT_JOBS_SUB_ITEMS: DocsNavSubItem[] = [
   { hash: "chat", label: "Chat" },
   { hash: "rag", label: "RAG" },
+  { hash: "chat-sessions", label: "Chat sessions" },
   { hash: "translate", label: "Translate" },
   { hash: "ocr", label: "OCR" },
   { hash: "check", label: "Check" },
@@ -60,7 +61,7 @@ export const API_DOCS_NAV: DocsNavGroup[] = [
       {
         href: "/docs/api/server/chat",
         label: "Chat jobs",
-        summary: "POST /api/v1/chat — chat, RAG, translate, OCR; poll and stream with a shared job id.",
+        summary: "POST /api/v1/chat — chat, RAG, translate, OCR; poll with a shared job id.",
         subItems: CHAT_JOBS_SUB_ITEMS,
       },
     ],

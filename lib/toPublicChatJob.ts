@@ -28,19 +28,3 @@ export type PublicChatJobResponse = {
   createdAt?: Date;
   updatedAt?: Date;
 };
-
-export type RagInsightsExportSummary = {
-  totalQueries: number;
-  answerableYes: number;
-  answerableNo: number;
-  answerablePartial: number;
-  topCategories: Array<{ category: string; count: number }>;
-  weakAnswers: Array<{
-    jobId: string;
-    question: string;
-    answerable: string | null;
-    intent: string | null;
-    category: string | null;
-    finishedAt: string | null;
-  }>;
-};

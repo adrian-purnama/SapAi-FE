@@ -323,6 +323,12 @@ export default function AdminPlanForm({
               checked={value.ragAnalyticsEnabled}
               onChange={(v) => patch("ragAnalyticsEnabled", v)}
             />
+            <ToggleRow
+              label="MCP access"
+              checked={value.allowMcp}
+              onChange={(v) => patch("allowMcp", v)}
+              hint="Lets projects expose this bot to MCP clients (Cursor, etc.)."
+            />
           </div>
         </section>
 

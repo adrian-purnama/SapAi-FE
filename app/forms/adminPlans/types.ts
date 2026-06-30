@@ -18,6 +18,7 @@ export type AdminPlan = {
   isAutoEmbed: boolean;
   embedBadgeCustomizable: boolean;
   ragAnalyticsEnabled: boolean;
+  allowMcp: boolean;
   priceLabel: string | null;
   priceNote: string | null;
   showOnPricingPage: boolean;
@@ -54,6 +55,7 @@ export type AdminPlanInput = {
   isAutoEmbed: boolean;
   embedBadgeCustomizable: boolean;
   ragAnalyticsEnabled: boolean;
+  allowMcp: boolean;
   priceLabel: string;
   priceNote: string;
   showOnPricingPage: boolean;
@@ -91,6 +93,7 @@ export const EMPTY_PLAN_INPUT: AdminPlanInput = {
   isAutoEmbed: false,
   embedBadgeCustomizable: false,
   ragAnalyticsEnabled: false,
+  allowMcp: false,
   priceLabel: "",
   priceNote: "",
   showOnPricingPage: false,
@@ -119,6 +122,7 @@ export function planToInput(plan: AdminPlan): AdminPlanInput {
     isAutoEmbed: plan.isAutoEmbed,
     embedBadgeCustomizable: plan.embedBadgeCustomizable,
     ragAnalyticsEnabled: plan.ragAnalyticsEnabled,
+    allowMcp: plan.allowMcp,
     priceLabel: plan.priceLabel ?? "",
     priceNote: plan.priceNote ?? "",
     showOnPricingPage: plan.showOnPricingPage,
@@ -148,6 +152,7 @@ export function inputToCreateBody(input: AdminPlanInput) {
     isAutoEmbed: input.isAutoEmbed,
     embedBadgeCustomizable: input.embedBadgeCustomizable,
     ragAnalyticsEnabled: input.ragAnalyticsEnabled,
+    allowMcp: input.allowMcp,
     priceLabel: input.priceLabel.trim() || null,
     priceNote: input.priceNote.trim() || null,
     showOnPricingPage: input.showOnPricingPage,

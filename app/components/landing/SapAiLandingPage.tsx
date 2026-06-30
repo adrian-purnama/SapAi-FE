@@ -479,6 +479,7 @@ export default function SapAiLandingPage() {
         <div className="mx-auto max-w-7xl px-6 py-16">
           <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-12 lg:gap-8">
             <div className="lg:col-span-4">
+            {brandLogoUrl ? <img src={brandLogoUrl} alt="" className="w-20" /> : null}
               <p className="text-lg font-semibold text-zinc-900">{brand}</p>
               <p className="mt-3 max-w-xs text-sm leading-relaxed text-zinc-600">
                 AI-powered chatbots for modern websites. Elegant automation, enterprise-grade
@@ -525,9 +526,9 @@ export default function SapAiLandingPage() {
                 </p>
                 <ul className="mt-4 space-y-2 text-sm text-zinc-600">
                   <li>
-                    <a href="mailto:itih7774@gmail.com" className="transition hover:text-zinc-900">
-                    itih7774@gmail.com
-                    </a>
+                    <p className="transition hover:text-zinc-900">
+                     amfphub@gmail.com
+                    </p>
                   </li>
                   <li>Remote</li>
                 </ul>

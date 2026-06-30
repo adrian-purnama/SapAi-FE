@@ -12,13 +12,15 @@ import {
   formatChatJobCreateError,
   getRagApiBaseUrl,
   parseCreateJobId,
+  parseCreateJobSession,
   RAG_JOB_WAIT_TIMEOUT_MS,
   waitForRagJobAnswer,
   type CreateJobResponse,
+  type ChatSessionMeta,
 } from "@/lib/waitForRagJobAnswer";
 
 export type EmbedRagRunResult =
-  | { ok: true; answer: string }
+  | { ok: true; answer: string; session?: ChatSessionMeta }
   | { ok: false; message: string };
 
 export function useEmbedRagChat(embedToken: string) {
@@ -28,7 +30,7 @@ export function useEmbedRagChat(embedToken: string) {
   const [error, setError] = useState("");
 
   const run = useCallback(
-    async (question: string): Promise<EmbedRagRunResult> => {
+    async (question: string, sessionId?: string): Promise<EmbedRagRunResult> => {
       const q = question.trim();
       const token = embedToken.trim();
       if (!q) {
@@ -58,6 +60,7 @@ export function useEmbedRagChat(embedToken: string) {
           recaptchaToken = tokenFromRecaptcha;
         }
 
+        const sid = sessionId?.trim();
         const res = await fetch(`${baseUrl}/api/v1/embed/chat`, {
           method: "POST",
           headers: {
@@ -66,6 +69,7 @@ export function useEmbedRagChat(embedToken: string) {
           },
           body: JSON.stringify({
             message: q,
+            ...(sid ? { sessionId: sid } : {}),
             ...(recaptchaToken ? { recaptchaToken } : {}),
           }),
         });
@@ -76,9 +80,10 @@ export function useEmbedRagChat(embedToken: string) {
           throw new Error(formatChatJobCreateError(create));
         }
 
+        const session = parseCreateJobSession(create) ?? undefined;
         const text = await waitForRagJobAnswer(baseUrl, jobId, { kind: "embed", embedToken: token });
         setAnswer(text);
-        return { ok: true, answer: text };
+        return { ok: true, answer: text, session };
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Request failed.";
         setError(msg);

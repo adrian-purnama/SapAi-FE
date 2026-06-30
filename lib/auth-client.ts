@@ -6,6 +6,7 @@ export type UserPlan = {
   accentColor: string | null;
   analyticsRetentionDays: number;
   ragAnalyticsEnabled: boolean;
+  allowMcp: boolean;
   isAutoEmbed: boolean;
   isPriority: boolean;
   rateLimitPerMinute: number;
@@ -40,6 +41,7 @@ export function parseUserPlan(raw: unknown): UserPlan | null {
         ? o.analyticsRetentionDays
         : 0,
     ragAnalyticsEnabled: Boolean(o.ragAnalyticsEnabled),
+    allowMcp: Boolean(o.allowMcp),
     isAutoEmbed: Boolean(o.isAutoEmbed),
     isPriority: Boolean(o.isPriority),
     rateLimitPerMinute:

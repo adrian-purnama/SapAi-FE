@@ -38,7 +38,7 @@ export default function DocsApiHubPage() {
               <Link href="/docs/api/server/chat" className="font-medium underline underline-offset-2 hover:text-sky-900">
                 Chat jobs
               </Link>{" "}
-                send, poll, and stream
+                send and poll
             </li>
             <li>
               <Link href="/docs/api/guides/embed" className="font-medium underline underline-offset-2 hover:text-sky-900">

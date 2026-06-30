@@ -28,7 +28,7 @@ type Props = {
   tryIt: ReactNode;
   exampleRequests?: ApiDocExample[];
   exampleResponses?: ApiDocExample[];
-  /** Extra reference below examples (errors, WebSocket notes, links). */
+  /** Extra reference below examples (errors, links). */
   reference?: ReactNode;
   className?: string;
 };

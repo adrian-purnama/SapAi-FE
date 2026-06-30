@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { getServerApiBaseUrl } from "@/lib/server-api";
 
 import {
   EmbedRagChat,
@@ -12,11 +13,6 @@ import {
 } from "./EmbedRagChat";
 
 import styles from "./EmbedRagChat.module.css";
-
-function readStandaloneBaseUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_STANDALONE_API_URL?.trim() || "http://localhost:8000";
-  return raw.replace(/\/$/, "");
-}
 
 function nilStr(v: unknown): string | null {
   if (typeof v !== "string") return null;
@@ -67,7 +63,7 @@ function EmbedLoadingShell() {
 }
 
 export function EmbedTokenGate({ token }: Props) {
-  const baseUrl = useMemo(() => readStandaloneBaseUrl(), []);
+  const baseUrl = useMemo(() => getServerApiBaseUrl(), []);
   const [status, setStatus] = useState<"loading" | "active" | "inactive">("loading");
   const [branding, setBranding] = useState<EmbedPublicBranding | null>(null);
 

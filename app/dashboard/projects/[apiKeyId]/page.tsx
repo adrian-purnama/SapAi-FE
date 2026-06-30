@@ -13,6 +13,7 @@ import {
   Funnel,
   Info,
   Lock,
+  Plug,
   RefreshCw,
   SlidersHorizontal,
   Trash2,
@@ -24,6 +25,7 @@ import { joinServerApiPath } from "@/lib/server-api";
 import { useSapAi } from "@/app/providers/sapai-provider";
 import { EditApiKeyAccessModal } from "@/app/forms/editApiKeyAccess/EditApiKeyAccessModal";
 import { ProjectFaqDocumentsPanel } from "@/app/forms/projectFaqDocuments/ProjectFaqDocumentsPanel";
+import { ProjectMcpPanel } from "@/app/forms/projectMcp/ProjectMcpPanel";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
 import { DateRangePicker } from "@/app/components/DateRangePicker/DateRangePicker";
 import { RagInsightsPanel, type RagInsightChartMode } from "@/app/components/RagInsightsPanel/RagInsightsPanel";
@@ -113,7 +115,7 @@ const RAG_INTENT_OPTIONS = [
   "confirmation",
 ] as const;
 
-type ProjectDetailTab = "usage" | "rag";
+type ProjectDetailTab = "usage" | "rag" | "mcp";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -678,6 +680,29 @@ export default function ProjectDetailPage() {
               />
               RAG / FAQ
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={detailTab === "mcp"}
+              id="project-tab-mcp"
+              aria-controls="project-panel-mcp"
+              className={[
+                "group relative -mb-px inline-flex items-center gap-2 border-b-2 pb-3 pt-1 text-sm font-medium transition-colors",
+                detailTab === "mcp"
+                  ? "border-zinc-900 text-zinc-900"
+                  : "border-transparent text-zinc-500 hover:text-zinc-800",
+              ].join(" ")}
+              onClick={() => setDetailTab("mcp")}
+            >
+              <Plug
+                className={[
+                  "h-4 w-4 shrink-0 transition-opacity",
+                  detailTab === "mcp" ? "opacity-100" : "opacity-50 group-hover:opacity-80",
+                ].join(" ")}
+                aria-hidden
+              />
+              MCP
+            </button>
           </div>
 
           {detailTab === "usage" ? (
@@ -1050,7 +1075,7 @@ export default function ProjectDetailPage() {
                 )}
               </section>
             </div>
-          ) : (
+          ) : detailTab === "rag" ? (
             <div id="project-panel-rag" role="tabpanel" aria-labelledby="project-tab-rag" className="mt-6">
               <div className="rounded-lg border border-zinc-200 bg-zinc-50/60 px-4 py-3 text-sm text-zinc-700">
                 <div className="flex gap-1 items-center text-zinc-900">
@@ -1067,6 +1092,14 @@ export default function ProjectDetailPage() {
               <section className="mt-6">
                 <ProjectFaqDocumentsPanel apiKeyId={apiKeyId} disabled={Boolean(keyMeta.revokedAt)} />
               </section>
+            </div>
+          ) : (
+            <div id="project-panel-mcp" role="tabpanel" aria-labelledby="project-tab-mcp" className="mt-6">
+              <ProjectMcpPanel
+                apiKeyId={apiKeyId}
+                token={token}
+                disabled={Boolean(keyMeta.revokedAt)}
+              />
             </div>
           )}
         </>

@@ -7,7 +7,7 @@ import { BarChart3, Copy, Frame, KeyRound, Loader2, Lock, MessageCircle, Plus, X
 import { useFaqEmbedSettingsSubmit } from "@/app/forms/faqProjectCategories/useFaqEmbedSettingsSubmit";
 import type { FaqProjectCategoriesLoadState } from "@/app/forms/faqProjectCategories/useFaqProjectCategoriesData";
 import { resolveEmbedAccent } from "@/lib/embed-accent";
-import { DEFAULT_APP_BADGE_LABEL } from "@/lib/embed-badge";
+import { DEFAULT_APP_BADGE_LABEL } from "@/lib/embed-constants";
 import { buildEmbedDemoUrl, parseDemoSiteUrl } from "@/lib/embed-demo";
 import { EMBED_IFRAME_H, EMBED_IFRAME_W } from "@/lib/embed-iframe";
 import { buildEmbedHostListenerScript, EMBED_LAUNCHER_ID, withEmbedWidgetParam } from "@/lib/embed-post-message";
@@ -73,21 +73,34 @@ function tryParseOriginInput(raw: string): { ok: true; origin: string } | { ok: 
 function EmbedWidgetPreview({
   accent,
   badgeLabel,
+  profileUrl,
   showBadge,
 }: {
   accent: string;
   badgeLabel: string;
+  profileUrl: string | null;
   showBadge: boolean;
 }) {
   const color = HEX_EMBED_COLOR.test(accent.trim()) ? accent.trim() : "#18181b";
+  const avatar = profileUrl?.trim() || null;
   return (
-    <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/60 p-3" aria-hidden>
-      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">Preview</p>
-      <div className="relative mx-auto aspect-[5/7] w-full max-w-[11rem] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-zinc-200/80 bg-zinc-50/60 p-3 lg:p-4" aria-hidden>
+      <p className="mb-2 text-center text-[10px] font-semibold uppercase tracking-wide text-zinc-500 lg:text-left">
+        Preview
+      </p>
+      <div className="relative mx-auto aspect-[5/7] w-full max-w-[12.5rem] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm lg:max-w-none">
         <div className="h-1 w-full" style={{ backgroundColor: color }} />
         <div className="border-b border-zinc-100 px-2.5 py-2">
           <div className="flex items-center gap-1.5">
-            <div className="h-6 w-6 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+            {avatar ? (
+              <img
+                src={avatar}
+                alt=""
+                className="h-6 w-6 shrink-0 rounded-full border border-zinc-200 object-cover ring-1 ring-white"
+              />
+            ) : (
+              <div className="h-6 w-6 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+            )}
             <div className="h-2 w-14 rounded-full bg-zinc-200" />
           </div>
         </div>
@@ -141,6 +154,8 @@ export function FaqRagEmbedSettingsCard({ apiKeyId, disabled = false, faqLoad }:
   const [badgeLabelDraft, setBadgeLabelDraft] = useState("");
   const [linkLabelDraft, setLinkLabelDraft] = useState("");
   const [linkUrlDraft, setLinkUrlDraft] = useState("");
+  const [ragToneDraft, setRagToneDraft] = useState("");
+  const [ragGuardrailsDraft, setRagGuardrailsDraft] = useState("");
   const embedUiKey = JSON.stringify({
     n: embed.assistantName,
     g: embed.assistantGreeting,
@@ -151,6 +166,9 @@ export function FaqRagEmbedSettingsCard({ apiKeyId, disabled = false, faqLoad }:
     badgeOn: embed.appBadgeEnabled,
     badgeLabel: embed.appBadgeLabel,
     policy: embed.embedAppBadgePolicy,
+    ragTone: embed.ragTone,
+    ragGuardrails: embed.ragGuardrails,
+    ragPromptEditable: embed.ragPromptEditable,
   });
   useEffect(() => {
     setNameDraft(embed.assistantName ?? "");
@@ -161,6 +179,8 @@ export function FaqRagEmbedSettingsCard({ apiKeyId, disabled = false, faqLoad }:
     setBadgeLabelDraft(embed.appBadgeLabel ?? "");
     setLinkLabelDraft(embed.furtherInfoLink?.label ?? "");
     setLinkUrlDraft(embed.furtherInfoLink?.url ?? "");
+    setRagToneDraft(embed.ragTone ?? "");
+    setRagGuardrailsDraft(embed.ragGuardrails ?? "");
   }, [embedUiKey]);
 
   const origin = getSiteOrigin();
@@ -248,6 +268,10 @@ export function FaqRagEmbedSettingsCard({ apiKeyId, disabled = false, faqLoad }:
       };
       if (badgeEnabledDraft) {
         patchBody.aiDisclaimer = null;
+      }
+      if (embed.ragPromptEditable) {
+        patchBody.ragTone = ragToneDraft.trim() || null;
+        patchBody.ragGuardrails = ragGuardrailsDraft.trim() || null;
       }
     }
     const r = await patchEmbedUi(patchBody);
@@ -494,8 +518,8 @@ export function FaqRagEmbedSettingsCard({ apiKeyId, disabled = false, faqLoad }:
               id="faq-embed-panel-appearance"
               aria-labelledby="faq-embed-tab-appearance"
             >
-              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_11rem] lg:items-start">
-                <div className="space-y-4">
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_13rem] lg:items-start">
+                <div className="order-2 space-y-4 lg:order-1">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="sm:col-span-2">
                       <label htmlFor="faq-embed-assistant-name" className="text-xs font-medium text-zinc-800">
@@ -571,6 +595,52 @@ export function FaqRagEmbedSettingsCard({ apiKeyId, disabled = false, faqLoad }:
                       />
                     </div>
                   </div>
+
+                  {embed.ragPromptEditable ? (
+                    <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/30 p-3 space-y-3">
+                      <div>
+                        <p className="text-xs font-medium text-zinc-800">Assistant behavior (RAG)</p>
+                        <p className="mt-0.5 text-[11px] leading-relaxed text-zinc-500">
+                          Applies to RAG answers for this project (API, embed, and dashboard tester). Chat jobs
+                          always use platform defaults.
+                        </p>
+                      </div>
+                      <div>
+                        <label htmlFor="faq-embed-rag-tone" className="text-xs font-medium text-zinc-800">
+                          Tone
+                        </label>
+                        <textarea
+                          id="faq-embed-rag-tone"
+                          rows={2}
+                          maxLength={1000}
+                          value={ragToneDraft}
+                          onChange={(e) => setRagToneDraft(e.target.value)}
+                          disabled={blocked}
+                          className="mt-1 w-full resize-y rounded-lg border border-zinc-200/90 bg-zinc-50/40 px-2.5 py-1.5 text-sm text-zinc-900 transition-colors focus:border-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-200/80 disabled:opacity-50"
+                          placeholder="Friendly and concise. Use we/our. No jargon."
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="faq-embed-rag-guardrails" className="text-xs font-medium text-zinc-800">
+                          Guardrails
+                        </label>
+                        <textarea
+                          id="faq-embed-rag-guardrails"
+                          rows={4}
+                          maxLength={2000}
+                          value={ragGuardrailsDraft}
+                          onChange={(e) => setRagGuardrailsDraft(e.target.value)}
+                          disabled={blocked}
+                          className="mt-1 w-full resize-y rounded-lg border border-zinc-200/90 bg-zinc-50/40 px-2.5 py-1.5 text-sm text-zinc-900 transition-colors focus:border-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-200/80 disabled:opacity-50"
+                          placeholder="Leave blank to use SapAi defaults."
+                        />
+                      </div>
+                    </div>
+                  ) : embed.embedPlanEligible ? (
+                    <p className="text-[11px] leading-relaxed text-zinc-500">
+                      Upgrade to Scale to customize RAG tone and guardrails.
+                    </p>
+                  ) : null}
 
                   <div className="rounded-lg border border-zinc-200/80 bg-zinc-50/30 p-3 space-y-3">
                     <p className="text-xs font-medium text-zinc-800">Profile picture</p>
@@ -695,10 +765,11 @@ export function FaqRagEmbedSettingsCard({ apiKeyId, disabled = false, faqLoad }:
                   </button>
                 </div>
 
-                <div className="lg:sticky lg:top-4">
+                <div className="order-1 flex justify-center lg:order-2 lg:sticky lg:top-4 lg:self-start lg:justify-start">
                   <EmbedWidgetPreview
                     accent={previewAccent}
                     badgeLabel={previewBadgeLabel}
+                    profileUrl={embed.assistantProfileUrl}
                     showBadge={previewShowBadge}
                   />
                 </div>

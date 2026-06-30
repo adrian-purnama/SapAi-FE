@@ -39,6 +39,19 @@ const COMMON_POST_PARAMS = [
   },
 ] as const;
 
+const SESSION_PARAMS = [
+  {
+    name: "sessionId",
+    type: "string",
+    description: "Optional. Continue an active chat session (from a prior response or POST /chat-sessions).",
+  },
+  {
+    name: "generateSessionId",
+    type: "boolean",
+    description: "Optional. When true, create a new session and return session.id (cannot combine with sessionId).",
+  },
+] as const;
+
 function ChatJobsDocsBody() {
   const { jobId, setJobId, defaultJobId } = useChatJobsJobId();
 
@@ -57,7 +70,7 @@ function ChatJobsDocsBody() {
           <>
             All assistant tasks use one enqueue endpoint:{" "}
             <code className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-sm">POST /api/v1/chat</code>.
-            Every response returns a <code className="font-mono text-sm">job.id</code> you poll or stream on the{" "}
+            Every response returns a <code className="font-mono text-sm">job.id</code> you poll on the{" "}
             <a href="#check" className="font-medium text-sky-800 underline-offset-2 hover:underline">
               Check
             </a>{" "}
@@ -115,17 +128,20 @@ function ChatJobsDocsBody() {
                 <td className="px-4 py-2.5">Poll job status and result</td>
               </tr>
               <tr>
-                <td className="px-4 py-2.5 font-mono text-xs">WS</td>
-                <td className="px-4 py-2.5 font-mono text-xs">/api/v1/chat/jobs/:id/stream</td>
-                <td className="px-4 py-2.5">Optional live updates instead of polling</td>
+                <td className="px-4 py-2.5 font-mono text-xs">POST</td>
+                <td className="px-4 py-2.5 font-mono text-xs">/api/v1/chat-sessions</td>
+                <td className="px-4 py-2.5">Create a multi-turn chat session (optional; see Chat sessions)</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2.5 font-mono text-xs">DELETE</td>
+                <td className="px-4 py-2.5 font-mono text-xs">/api/v1/chat-sessions/:id</td>
+                <td className="px-4 py-2.5">End a chat session early</td>
               </tr>
             </tbody>
           </table>
         </div>
         <p className="mt-3 text-sm text-zinc-600">
-          Auth: header <code className="font-mono text-xs">x-api-key</code> on HTTP; query{" "}
-          <code className="font-mono text-xs">apiKey</code> or <code className="font-mono text-xs">embedToken</code> on
-          WebSocket.
+          Auth: header <code className="font-mono text-xs">x-api-key</code> on HTTP requests.
         </p>
       </DocsSubsection>
 
@@ -135,7 +151,7 @@ function ChatJobsDocsBody() {
           method="POST"
           path="/api/v1/chat"
           authLabel="API key"
-          description="Standard text completion. Send a model label from your plan and at least one message."
+          description="Standard text completion. Send a model label from your plan and at least one message. Optional sessionId or generateSessionId enable multi-turn memory (full message history is rebuilt server-side)."
           parameters={[
             { name: "taskType", type: '"chat"', required: true, description: "Must be chat." },
             {
@@ -163,6 +179,7 @@ function ChatJobsDocsBody() {
               type: "string",
               description: "Optional JSON shape; server prepends a system message for structured output.",
             },
+            ...SESSION_PARAMS,
             ...COMMON_POST_PARAMS.slice(1),
           ]}
           tryIt={<ApiHttpExamplesPanel variant="chatJob" fixedTaskType="chat" onJobIdCaptured={setJobId} />}
@@ -211,13 +228,25 @@ function ChatJobsDocsBody() {
                 dashboard
               </Link>
               . Same body shape as chat; set <code className="font-mono text-xs">taskType</code> to{" "}
-              <code className="font-mono text-xs">rag</code>.
+              <code className="font-mono text-xs">rag</code>. Optional{" "}
+              <code className="font-mono text-xs">sessionId</code> or{" "}
+              <code className="font-mono text-xs">generateSessionId</code> start or continue a{" "}
+              <a href="#chat-sessions" className="font-medium text-sky-800 underline-offset-2 hover:underline">
+                chat session
+              </a>{" "}
+              (1-hour idle expiry). With a session, prior user/assistant turns are included in the job input; RAG
+              retrieval still uses the latest user message. When the project has MCP enabled (dashboard → MCP tab), RAG
+              jobs may route to external tools first: if required tool arguments are missing, the assistant reply asks
+              for them (no FAQ/MCP call on that turn); on the next turn with a{" "}
+              <code className="font-mono text-xs">sessionId</code>, the tool runs and the answer merges MCP output with
+              FAQ retrieval.
             </>
           }
           parameters={[
             { name: "taskType", type: '"rag"', required: true, description: "Must be rag." },
             { name: "model", type: "string", required: true, description: "Model label allowed for rag on your plan." },
             { name: "input", type: "array", required: true, description: "User question in input[].content." },
+            ...SESSION_PARAMS,
             ...COMMON_POST_PARAMS.slice(1),
           ]}
           tryIt={<ApiHttpExamplesPanel variant="chatJob" fixedTaskType="rag" onJobIdCaptured={setJobId} />}
@@ -228,6 +257,46 @@ function ChatJobsDocsBody() {
   "taskType": "rag",
   "model": "<modelLabel>",
   "input": [{ "role": "user", "content": "What is the refund policy?" }],
+  "maxTokens": 500
+}`,
+            },
+            {
+              title: "Start a session",
+              body: `{
+  "taskType": "rag",
+  "model": "<modelLabel>",
+  "generateSessionId": true,
+  "input": [{ "role": "user", "content": "What is the refund policy?" }],
+  "maxTokens": 500
+}`,
+            },
+            {
+              title: "Continue a session",
+              body: `{
+  "taskType": "rag",
+  "model": "<modelLabel>",
+  "sessionId": "507f1f77bcf86cd799439011",
+  "input": [{ "role": "user", "content": "Can you summarize that in one sentence?" }],
+  "maxTokens": 500
+}`,
+            },
+            {
+              title: "MCP — turn 1 (missing args)",
+              body: `{
+  "taskType": "rag",
+  "model": "<modelLabel>",
+  "sessionId": "507f1f77bcf86cd799439011",
+  "input": [{ "role": "user", "content": "Tell me about my account" }],
+  "maxTokens": 500
+}`,
+            },
+            {
+              title: "MCP — turn 2 (user supplies userId)",
+              body: `{
+  "taskType": "rag",
+  "model": "<modelLabel>",
+  "sessionId": "507f1f77bcf86cd799439011",
+  "input": [{ "role": "user", "content": "usr_abc123" }],
   "maxTokens": 500
 }`,
             },
@@ -243,6 +312,10 @@ function ChatJobsDocsBody() {
       "status": "pending",
       "taskType": "rag",
       "model": "<modelLabel>"
+    },
+    "session": {
+      "id": "507f1f77bcf86cd799439012",
+      "expiresAt": "2026-06-29T15:00:00.000Z"
     }
   },
   "error": null
@@ -251,6 +324,114 @@ function ChatJobsDocsBody() {
           ]}
           reference={<DocsAiPromptCopy prompt={RAG_AI_PROMPT} />}
         />
+        <DocsCallout variant="info" title="MCP + RAG (multi-turn)" className="mt-6">
+          <p className="text-sm leading-relaxed">
+            Example with an MCP tool <code className="font-mono text-xs">get_account</code> that requires{" "}
+            <code className="font-mono text-xs">userId</code>:
+          </p>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm">
+            <li>
+              User: “Tell me about my account” → assistant: “Can you provide your user ID?” (clarify; session stores
+              both turns).
+            </li>
+            <li>
+              User: “usr_abc123” → server calls MCP + FAQ retrieval → merged answer in{" "}
+              <code className="font-mono text-xs">result.text</code>.
+            </li>
+          </ol>
+          <p className="mt-2 text-sm leading-relaxed">
+            Configure MCP URL and enable it on the project MCP tab; plan must include{" "}
+            <code className="font-mono text-xs">allowMcp</code>. Embed widget uses the same RAG runner via{" "}
+            <code className="font-mono text-xs">POST /api/v1/embed/chat</code> with{" "}
+            <code className="font-mono text-xs">sessionId</code>.
+          </p>
+        </DocsCallout>
+      </section>
+
+      <section id="chat-sessions" className="scroll-mt-28">
+        <ApiEndpointSection
+          sectionHeading="Chat sessions"
+          method="POST"
+          path="/api/v1/chat-sessions"
+          authLabel="API key"
+          description={
+            <>
+              Create a standalone chat session for multi-visitor isolation on one API key. Works with all task types on{" "}
+              <code className="font-mono text-xs">POST /api/v1/chat</code>. Sessions expire after{" "}
+              <strong className="font-medium text-zinc-900">1 hour</strong> of idle time (sliding window refreshed on
+              each valid <code className="font-mono text-xs">sessionId</code> use). End early with{" "}
+              <code className="font-mono text-xs">DELETE /api/v1/chat-sessions/:id</code>. The public embed widget uses{" "}
+              <code className="font-mono text-xs">POST /api/v1/embed/sessions</code> instead (embed token auth).
+            </>
+          }
+          parameters={[]}
+          tryIt={null}
+          exampleRequests={[
+            {
+              title: "Create session",
+              body: "(empty body)",
+            },
+          ]}
+          exampleResponses={[
+            {
+              title: "201 — created",
+              body: `{
+  "success": true,
+  "data": {
+    "session": {
+      "id": "507f1f77bcf86cd799439011",
+      "expiresAt": "2026-06-29T15:00:00.000Z"
+    }
+  },
+  "error": null
+}`,
+            },
+          ]}
+        />
+        <DocsCallout variant="info" title="Memory per task type" className="mt-6">
+          <ul className="list-disc space-y-1 pl-5 text-sm">
+            <li>
+              <strong>Chat / RAG</strong> — server stores each user turn and rebuilds full{" "}
+              <code className="font-mono text-xs">input[]</code> from session messages.
+            </li>
+            <li>
+              <strong>Translate</strong> — prior turns are prepended as plain text before the translate prompt for the
+              current <code className="font-mono text-xs">text</code>.
+            </li>
+            <li>
+              <strong>OCR</strong> — each job still sends only the current image; the session logs Q/A text (images are
+              not replayed).
+            </li>
+          </ul>
+        </DocsCallout>
+        <div className="mt-8">
+          <ApiEndpointSection
+            sectionHeading="End chat session"
+            method="DELETE"
+            path="/api/v1/chat-sessions/:id"
+            authLabel="API key"
+            description="Mark a session ended. Idempotent if already ended."
+            parameters={[
+              { name: "id", type: "string", required: true, description: "Chat session id from create or chat response." },
+            ]}
+            tryIt={null}
+            exampleResponses={[
+              {
+                title: "200 — ended",
+                body: `{
+  "success": true,
+  "data": {
+    "session": {
+      "id": "507f1f77bcf86cd799439011",
+      "expiresAt": "2026-06-29T15:00:00.000Z"
+    }
+  },
+  "error": null
+}`,
+              },
+            ]}
+          />
+        </div>
       </section>
 
       <section id="translate" className="scroll-mt-28">
@@ -259,7 +440,7 @@ function ChatJobsDocsBody() {
           method="POST"
           path="/api/v1/chat"
           authLabel="API key"
-          description="Language translation. No model field — the server picks the translate model for your plan."
+          description="Language translation. No model field — the server picks the translate model for your plan. Optional sessionId enables short conversation context before the current text."
           parameters={[
             { name: "taskType", type: '"translate"', required: true, description: "Must be translate." },
             { name: "sourceLang", type: "string", required: true, description: 'Display name, e.g. "English".' },
@@ -267,6 +448,7 @@ function ChatJobsDocsBody() {
             { name: "targetLang", type: "string", required: true, description: 'Display name, e.g. "Indonesian".' },
             { name: "targetCode", type: "string", required: true, description: 'ISO-style code, e.g. "id".' },
             { name: "text", type: "string", required: true, description: "Text to translate." },
+            ...SESSION_PARAMS,
             ...COMMON_POST_PARAMS.slice(1),
           ]}
           tryIt={
@@ -317,7 +499,9 @@ function ChatJobsDocsBody() {
             <>
               Extract text, formulas, or tables from an image using the <code className="font-mono text-xs">ocr</code>{" "}
               model (<code className="font-mono text-xs">glm-ocr:bf16</code>). Send the image as base64 — raw or{" "}
-              <code className="font-mono text-xs">data:image/…;base64,…</code>. No model field.
+              <code className="font-mono text-xs">data:image/…;base64,…</code>. No model field. Optional{" "}
+              <code className="font-mono text-xs">sessionId</code> logs Q/A turns; each job still sends only the current
+              image.
             </>
           }
           parameters={[
@@ -339,6 +523,7 @@ function ChatJobsDocsBody() {
                 </>
               ),
             },
+            ...SESSION_PARAMS,
             ...COMMON_POST_PARAMS.slice(1),
           ]}
           tryIt={<ApiHttpExamplesPanel variant="chatJob" fixedTaskType="ocr" onJobIdCaptured={setJobId} />}
@@ -436,47 +621,6 @@ function ChatJobsDocsBody() {
             },
           ]}
           reference={<DocsAiPromptCopy prompt={CHECK_JOB_AI_PROMPT} />}
-        />
-
-        <ApiEndpointSection
-          method="GET"
-          path="/api/v1/chat/jobs/:id/stream"
-          authLabel="WebSocket"
-          description={
-            <>
-              Optional real-time updates. Query <code className="font-mono text-xs">apiKey</code> or{" "}
-              <code className="font-mono text-xs">embedToken</code> must match the job owner. Use{" "}
-              <code className="font-mono text-xs">wss://</code> in production.
-            </>
-          }
-          tryIt={
-            <p className="text-sm text-zinc-600">
-              WebSocket cannot be tested with Run in the browser. Copy a URL below and connect with your client. Job id:{" "}
-              <code className="font-mono text-xs">{jobId || defaultJobId}</code>
-            </p>
-          }
-          exampleRequests={[
-            {
-              title: "API key",
-              body: `wss://YOUR_HOST/api/v1/chat/jobs/${jobId || "JOB_ID"}/stream?apiKey=YOUR_API_KEY`,
-            },
-            {
-              title: "Embed token",
-              body: `wss://YOUR_HOST/api/v1/chat/jobs/${jobId || "JOB_ID"}/stream?embedToken=YOUR_EMBED_TOKEN`,
-            },
-          ]}
-          exampleResponses={[
-            {
-              title: "First message (same shape as GET job)",
-              body: `{
-  "id": "507f1f77bcf86cd799439011",
-  "status": "running",
-  "taskType": "ocr",
-  "result": null,
-  "error": null
-}`,
-            },
-          ]}
         />
       </section>
     </div>

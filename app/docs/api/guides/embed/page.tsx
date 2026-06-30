@@ -149,6 +149,11 @@ export default function EmbedDashboardGuidePage() {
               <code className="font-mono text-xs">et_…</code>) is safe in the browser. It is not your secret{" "}
               <code className="font-mono text-xs">sapai_sk_</code> server key.
             </DocsCallout>
+            <DocsCallout variant="info" className="mt-4">
+              Each visitor gets an isolated <strong className="font-medium">chat session</strong>: the widget creates one
+              when the chat opens and ends it when the panel closes (1-hour idle expiry). Multi-turn memory is stored
+              server-side; visitors do not share conversation state.
+            </DocsCallout>
           </li>
 
           <li className="relative border-l-2 border-zinc-200 pl-8">

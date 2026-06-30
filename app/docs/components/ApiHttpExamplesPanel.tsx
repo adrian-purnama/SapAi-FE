@@ -19,6 +19,7 @@ import {
   type TaskType,
 } from "@/app/docs/constants/standaloneApiDocs";
 import { SearchableSelect } from "@/app/components/SearchableSelect";
+import { parseCreateJobSession } from "@/lib/waitForRagJobAnswer";
 import { useApiDocsSettings } from "./ApiDocsSettingsProvider";
 
 const fieldClass =
@@ -454,6 +455,9 @@ function ChatJobExamples({
   const [ocrImageLabel, setOcrImageLabel] = useState("");
   const [maxTokens, setMaxTokens] = useState("500");
   const [outputJsonTemplate, setOutputJsonTemplate] = useState("");
+  const [generateSessionId, setGenerateSessionId] = useState(false);
+  const [chatSessionId, setChatSessionId] = useState("");
+  const [lastSessionId, setLastSessionId] = useState<string | null>(null);
   const [taskTypeOptions, setTaskTypeOptions] = useState<string[]>(() => [...TASK_TYPES]);
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [builderRows, setBuilderRows] = useState<TemplateBuilderRow[]>(() => [
@@ -470,12 +474,21 @@ function ChatJobExamples({
     if (fixedTaskType) setTaskType(fixedTaskType);
   }, [fixedTaskType]);
 
+  const applySessionFields = (base: Record<string, unknown>) => {
+    if (generateSessionId) {
+      base.generateSessionId = true;
+    } else if (chatSessionId.trim()) {
+      base.sessionId = chatSessionId.trim();
+    }
+    return base;
+  };
+
   const body = useMemo(() => {
     const n = Number.parseInt(maxTokens, 10);
     const max = Number.isFinite(n) && n > 0 ? n : 500;
 
     if (isTranslate) {
-      return {
+      return applySessionFields({
         taskType: "translate",
         sourceLang: sourceLang.trim() || "English",
         sourceCode: sourceCode.trim() || "en",
@@ -483,16 +496,16 @@ function ChatJobExamples({
         targetCode: targetCode.trim() || "id",
         text: translateText.trim() || "Hello, how are you?",
         maxTokens: max,
-      };
+      });
     }
 
     if (isOcr) {
-      return {
+      return applySessionFields({
         taskType: "ocr",
         imageBase64: ocrImageBase64.trim(),
         mode: ocrMode,
         maxTokens: max,
-      };
+      });
     }
 
     const text = content.trim() || "Hello";
@@ -507,7 +520,7 @@ function ChatJobExamples({
     if (t.length > 0) {
       base.outputJsonTemplate = t;
     }
-    return base;
+    return applySessionFields(base);
   }, [
     effectiveTaskType,
     isTranslate,
@@ -524,6 +537,8 @@ function ChatJobExamples({
     translateText,
     maxTokens,
     outputJsonTemplate,
+    generateSessionId,
+    chatSessionId,
   ]);
 
   const req = useMemo(
@@ -737,6 +752,37 @@ function ChatJobExamples({
           </label>
         )}
 
+        <div className="mt-4 space-y-3 rounded-lg border border-zinc-200 bg-zinc-50/80 p-3">
+          <p className="text-xs font-semibold text-zinc-600">Chat session (optional)</p>
+          <label className="flex items-center gap-2 text-sm text-zinc-800">
+            <input
+              type="checkbox"
+              checked={generateSessionId}
+              onChange={(e) => setGenerateSessionId(e.target.checked)}
+              className="rounded border-zinc-300"
+            />
+            <span>generateSessionId — start a new 1-hour session</span>
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium text-zinc-700">sessionId</span>
+            <input
+              type="text"
+              value={chatSessionId}
+              onChange={(e) => setChatSessionId(e.target.value)}
+              disabled={generateSessionId}
+              placeholder="Continue an existing session"
+              spellCheck={false}
+              className={fieldClass}
+            />
+          </label>
+          {lastSessionId ? (
+            <p className="text-xs text-zinc-600">
+              Last response session:{" "}
+              <code className="rounded bg-white px-1 font-mono text-[11px]">{lastSessionId}</code>
+            </p>
+          ) : null}
+        </div>
+
         {!isTranslate && !isOcr && effectiveTaskType === "chat" ? (
           <details className="mt-6 border-t border-zinc-200 pt-4">
             <summary className="cursor-pointer select-none text-sm font-medium text-zinc-700 marker:text-zinc-400 hover:text-zinc-900">
@@ -845,6 +891,11 @@ function ChatJobExamples({
         requiresApiKey
         apiKeyPresent={ctx.apiKey.trim().length > 0}
         onJobIdCaptured={onJobIdCaptured}
+        onSessionCaptured={(session) => {
+          setLastSessionId(session.id);
+          setChatSessionId(session.id);
+          setGenerateSessionId(false);
+        }}
       />
     </div>
   );
@@ -863,6 +914,7 @@ function SnippetBlocks({
   requiresApiKey,
   apiKeyPresent,
   onJobIdCaptured,
+  onSessionCaptured,
 }: {
   req: ReturnType<typeof resolveSnippetRequest>;
   baseHint: "standalone" | "next";
@@ -870,6 +922,7 @@ function SnippetBlocks({
   requiresApiKey: boolean;
   apiKeyPresent: boolean;
   onJobIdCaptured?: (jobId: string) => void;
+  onSessionCaptured?: (session: { id: string; expiresAt: string }) => void;
 }) {
   const [activeLang, setActiveLang] = useState<SnippetTabId>("curl");
   const [snippetHtml, setSnippetHtml] = useState("");
@@ -944,6 +997,14 @@ function SnippetBlocks({
         const captured = extractJobIdFromResponse(text);
         if (captured) onJobIdCaptured(captured);
       }
+      if (res.ok && onSessionCaptured) {
+        try {
+          const session = parseCreateJobSession(JSON.parse(text));
+          if (session) onSessionCaptured(session);
+        } catch {
+          /* ignore */
+        }
+      }
       if (!res.ok) setRunError(banner);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -952,7 +1013,7 @@ function SnippetBlocks({
     } finally {
       setRunLoading(false);
     }
-  }, [req, runCredentials, requiresApiKey, apiKeyPresent, runLoading, onJobIdCaptured]);
+  }, [req, runCredentials, requiresApiKey, apiKeyPresent, runLoading, onJobIdCaptured, onSessionCaptured]);
 
   return (
     <div className="min-w-0 max-w-full space-y-4">

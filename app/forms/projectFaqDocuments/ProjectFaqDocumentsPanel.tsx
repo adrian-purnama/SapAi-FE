@@ -19,7 +19,7 @@ import {
   formatFaqFileSize,
   isFaqDocumentBusy,
 } from "./schema";
-import { useFaqPlanLimits } from "./useFaqPlanLimits";
+import { useUserPlanLimits } from "./useUserPlanLimits";
 import { useProjectFaqDocumentsData } from "./useProjectFaqDocumentsData";
 import { useProjectFaqDocumentsMutations } from "./useProjectFaqDocumentsMutations";
 import { FaqRagEmbedSettingsCard } from "./FaqRagEmbedSettingsCard";
@@ -36,7 +36,7 @@ type PendingKeyOp =
 
 export function ProjectFaqDocumentsPanel({ apiKeyId, disabled = false }: Props) {
   const { token } = useSapAi();
-  const planLimits = useFaqPlanLimits();
+  const planLimits = useUserPlanLimits();
   const uploadInputId = useId();
   const deleteModalTitleId = useId();
   const reprocessModalTitleId = useId();
@@ -442,12 +442,14 @@ export function ProjectFaqDocumentsPanel({ apiKeyId, disabled = false }: Props) 
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold text-zinc-900">Test your knowledge retrival</h2>
+            <h2 className="text-lg font-semibold text-zinc-900">Test your knowledge retrieval</h2>
           </div>
           <p className="mt-1 text-[11px] text-zinc-600">
-            Ask a question against your uploaded knowledge files, this uses
-            <code className="rounded bg-zinc-100 px-1 font-mono text-xs">/api/v1/chat</code> with{" "}
-            <code className="rounded bg-zinc-100 px-1 font-mono text-xs">taskType=rag</code>.
+            Multi-turn RAG test against your uploaded files — uses{" "}
+            <code className="rounded bg-zinc-100 px-1 font-mono text-xs">POST /api/v1/chat</code> with{" "}
+            <code className="rounded bg-zinc-100 px-1 font-mono text-xs">taskType=rag</code>, chat sessions, and
+            job streaming. When MCP is enabled on this project, follow-up turns can ask for missing tool arguments
+            before calling your MCP server.
           </p>
         </div>
       </div>

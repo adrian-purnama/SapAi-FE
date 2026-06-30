@@ -34,6 +34,9 @@ export type FaqEmbedPublicFlags = {
   appBadgeEnabled: boolean | null;
   appBadgeLabel: string | null;
   aiDisclaimerEditable: boolean;
+  ragTone: string | null;
+  ragGuardrails: string | null;
+  ragPromptEditable: boolean;
 };
 
 export type FaqProjectCategoriesLoadState = {
@@ -75,6 +78,9 @@ const EMPTY_EMBED: FaqEmbedPublicFlags = {
   appBadgeEnabled: null,
   appBadgeLabel: null,
   aiDisclaimerEditable: false,
+  ragTone: null,
+  ragGuardrails: null,
+  ragPromptEditable: false,
 };
 
 function parseEmbedAppBadgePolicy(raw: unknown): EmbedAppBadgePolicy {
@@ -112,6 +118,9 @@ function parseEmbedPayload(raw: unknown): FaqEmbedPublicFlags {
     appBadgeEnabled: typeof o.appBadgeEnabled === "boolean" ? o.appBadgeEnabled : null,
     appBadgeLabel: nilStr(o.appBadgeLabel),
     aiDisclaimerEditable: Boolean(o.aiDisclaimerEditable),
+    ragTone: nilStr(o.ragTone),
+    ragGuardrails: nilStr(o.ragGuardrails),
+    ragPromptEditable: Boolean(o.ragPromptEditable),
   };
 }
 
